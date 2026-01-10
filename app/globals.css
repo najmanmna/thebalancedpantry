@@ -1,5 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
+/* 1. UPDATE FONTS: Fraunces (Retro Serif) & Quicksand (Soft Sans) */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;400;600;700;900&family=Quicksand:wght@300;400;500;600;700&display=swap');
 
 @import "tailwindcss";
 
@@ -9,11 +9,17 @@ html, body {
   overflow-x: hidden;
 }
 
-
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  /* Custome color start */
+  /* 2. UPDATE CUSTOM COLORS: The "Warm Retro" Palette */
+  --color-cream: #F3EFE0;        /* Main Background */
+  --color-charcoal: #4A3728;     /* Main Text */
+  --color-brandRed: #D64545;     /* Buttons / CTA */
+  --color-dustyRose: #D98E8E;    /* Soft Highlights */
+  --color-sage: #5D7052;         /* Nature/Trust Icons */
+  
+  /* Legacy/Tech colors (kept just in case, but you should phase these out) */
   --color-tech_bg_color: #ffffff;
   --color-tech_orange: #000000;
   --color-tech_white: #ffffff;
@@ -24,10 +30,9 @@ html, body {
   --color-tech_purpel: #6e2594;
   --color-tech_light_green: #3b9c3c;
   --color-tech_dark_red: #f02757;
-  --color-tech_light_green: #93d991;
-  --color-tech_dark_color: #151515;
   --color-tech_light_color: #52525b;
-  /* Custome color end */
+
+  /* Standard Shadcn Mappings */
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
 
@@ -70,116 +75,123 @@ html, body {
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
 
+  /* 3. DEFINE FONT FAMILIES */
+  --font-serif: 'Fraunces', serif;
+  --font-sans: 'Quicksand', sans-serif;
+
   @keyframes spin-slow {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
   @keyframes accordion-down {
-    from {
-      height: 0;
-    }
-    to {
-      height: var(--radix-accordion-content-height);
-    }
+    from { height: 0; }
+    to { height: var(--radix-accordion-content-height); }
   }
   @keyframes accordion-up {
-    from {
-      height: var(--radix-accordion-content-height);
-    }
-    to {
-      height: 0;
-    }
+    from { height: var(--radix-accordion-content-height); }
+    to { height: 0; }
   }
 }
 
-/*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
-
-
 @layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
+  *, ::after, ::before, ::backdrop, ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
   }
 }
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    /* 4. SET GLOBAL DEFAULTS TO OUR NEW THEME (HSL conversion approx) */
+    
+    /* Background: Cream (#F3EFE0) -> HSL(47, 33%, 92%) */
+    --background: 47 33% 92%;
+    
+    /* Foreground: Charcoal (#4A3728) -> HSL(27, 23%, 22%) */
+    --foreground: 27 23% 22%;
+
+    /* Card: White or slightly lighter cream */
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --card-foreground: 27 23% 22%;
+    
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+    --popover-foreground: 27 23% 22%;
+    
+    /* Primary: Brand Red (#D64545) -> HSL(0, 63%, 55%) */
+    --primary: 0 63% 55%;
+    --primary-foreground: 47 33% 92%; /* Cream text on Red button */
+    
+    /* Secondary: Dusty Rose (#D98E8E) -> HSL(0, 48%, 70%) */
+    --secondary: 0 48% 70%;
+    --secondary-foreground: 27 23% 22%;
+    
+    /* Muted: Lighter Beige */
+    --muted: 47 33% 85%;
+    --muted-foreground: 27 10% 40%;
+    
+    /* Accent: Sage Green (#5D7052) -> HSL(98, 16%, 38%) */
+    --accent: 98 16% 38%;
+    --accent-foreground: 47 33% 92%;
+    
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
+    
+    /* Borders: Light Brown/Grey */
+    --border: 27 10% 85%;
+    --input: 27 10% 85%;
+    --ring: 0 63% 55%; /* Red ring focus */
+    
+    --radius: 0.5rem;
+    
+    /* Charts (Optional) */
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
   }
+
+  /* Dark mode: Inverted (Deep Chocolate Background) */
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
+    --background: 27 23% 15%; /* Dark Chocolate */
+    --foreground: 47 33% 92%; /* Cream Text */
+    --card: 27 23% 18%;
+    --card-foreground: 47 33% 92%;
+    --popover: 27 23% 15%;
+    --popover-foreground: 47 33% 92%;
+    --primary: 0 63% 60%;
+    --primary-foreground: 47 33% 92%;
+    --secondary: 27 23% 25%;
+    --secondary-foreground: 47 33% 92%;
+    --muted: 27 23% 25%;
+    --muted-foreground: 47 33% 70%;
+    --accent: 27 23% 25%;
+    --accent-foreground: 47 33% 92%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --destructive-foreground: 47 33% 92%;
+    --border: 27 23% 25%;
+    --input: 27 23% 25%;
+    --ring: 0 63% 60%;
   }
 }
+
 @layer base {
   :root {
-    --font-poppins: 'Poppins', sans-serif;
+    /* 5. APPLY NEW FONTS */
+    --font-serif: 'Fraunces', serif;
+    --font-sans: 'Quicksand', sans-serif;
   }
 
   body {
-    font-family: var(--font-poppins);
+    /* Default to Quicksand */
+    font-family: var(--font-sans);
+  }
+  
+  /* Use Fraunces for headings automatically */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
   }
 }
+
 @layer base {
   * {
     @apply border-border;
@@ -199,8 +211,8 @@ html, body {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  z-index: 9999; /* Make sure it's above other elements */
-  display: block; /* Ensure the widget is visible */
+  z-index: 9999;
+  display: block;
 }
 
 .scrollbar-hide::-webkit-scrollbar {

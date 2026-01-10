@@ -1,47 +1,51 @@
 import React from "react";
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import { Fraunces, Quicksand } from "next/font/google"; // Updated Fonts
 import { SanityLive } from "@/sanity/lib/live";
 import { Toaster } from "react-hot-toast";
 import WhatsAppButton from "@/components/WhatsAppButton";
-// import Script from "next/script"; // <-- For Method 1
-
 import "./globals.css";
 
-// Import Google Font (Poppins) with multiple weights
-const poppins = Poppins({
+// 1. SETUP RETRO SERIF FONT (Headings)
+const fraunces = Fraunces({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-poppins",
+  variable: "--font-serif",
+  display: "swap",
+  // axes: ["SOFT", "WONK"], // Optional: Adds extra retro character
+});
+
+// 2. SETUP SOFT SANS FONT (Body)
+const quicksand = Quicksand({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  weight: ["300", "400", "500", "600", "700"],
   display: "swap",
 });
 
-// const GA_MEASUREMENT_ID = "G-QLGJ5THRC9";
-
 export const metadata: Metadata = {
   title: {
-    template: "%s - Elvyn",
-    default: "Elvyn | Bags & Accessories",
+    template: "%s | The Balanced Pantry",
+    default: "The Balanced Pantry | Premium Freeze-Dried Snacks",
   },
   description:
-    "Discover premium bags and accessories at Elvyn. Carry your story in style with timeless designs crafted for elegance and everyday comfort. Visit elvynstore.com.",
+    "Experience the crunch of 100% real fruit. Flash-frozen to lock in nutrients. No sugar added. Imported quality, delivered islandwide in Sri Lanka.",
   icons: {
-    icon: "/favicon.png",
+    icon: "/favicon.png", // Make sure to update this image file later
     shortcut: "/favicon.png",
     apple: "/favicon.png",
   },
   openGraph: {
-    title: "Elvyn | Bags & Accessories",
+    title: "The Balanced Pantry | Crunchy Real Fruit Snacks",
     description:
-      "Explore Elvyn’s collection of stylish bags and accessories — Carry Your Story in Style.",
-    url: "https://elvynstore.com",
-    siteName: "Elvyn",
+      "100% Natural, 0% Guilt. Taste the crunch of freeze-dried strawberries imported from the finest farms.",
+    url: "https://thebalancedpantry.lk",
+    siteName: "The Balanced Pantry",
     images: [
       {
-        url: "/2.jpg", // replace with your actual OG image if available
+        url: "/og-image.jpg", // Update this with a shot of the strawberry bowl
         width: 1200,
         height: 630,
-        alt: "Elvyn Bags & Accessories",
+        alt: "The Balanced Pantry - Freeze Dried Strawberries",
       },
     ],
     locale: "en_US",
@@ -51,39 +55,48 @@ export const metadata: Metadata = {
 
 const RootLayout = async ({ children }: { children: React.ReactNode }) => {
   return (
-    <html lang="en">
+    <html lang="en" className={`${fraunces.variable} ${quicksand.variable}`}>
       <body
-        className={`${poppins.variable} pt-25 antialiased bg-tech_bg_color`}
+        // 3. GLOBAL THEME APPLICATION
+        // bg-cream: Sets the vintage paper background
+        // text-charcoal: Sets the dark brown text default
+        // antialiased: Makes fonts crisp
+        className="antialiased bg-cream text-charcoal selection:bg-brandRed/30"
       >
- 
+        
         {children}
 
-        {/* Toaster */}
+        {/* 4. CUSTOM RETRO TOASTER */}
         <Toaster
           position="bottom-right"
           toastOptions={{
-            style: { background: "#000000", color: "#fff" },
+            style: {
+              background: "#4A3728", // Charcoal/Brown background
+              color: "#F3EFE0",      // Cream text
+              fontFamily: "var(--font-sans)",
+              border: "1px solid #5D7052", // Subtle Sage Green border
+            },
+            success: {
+              iconTheme: {
+                primary: "#5D7052", // Sage Green checkmark
+                secondary: "#F3EFE0",
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: "#D64545", // Brand Red X
+                secondary: "#F3EFE0",
+              },
+            },
           }}
         />
 
-        {/* Sanity Live */}
+        {/* Sanity Live Content */}
         <SanityLive />
-       
+        
         {/* Floating WhatsApp Button */}
-        <WhatsAppButton />
+        {/* <WhatsAppButton /> */}
       </body>
-     {/* <Script
-        src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-        strategy="afterInteractive"
-      />
-      <Script id="google-analytics" strategy="afterInteractive">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', '${GA_MEASUREMENT_ID}');
-        `}
-      </Script> */}
     </html>
   );
 };
