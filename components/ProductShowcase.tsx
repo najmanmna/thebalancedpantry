@@ -4,9 +4,8 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, Plus, Minus, ChevronDown, ShoppingBag } from "lucide-react";
-// You'll need a mockup of your Pouch here. 
-// For now, using a placeholder or the bowl image if you don't have a 3D pouch render yet.
-import strawberrybowl from "@/images/strawberry-bowl-transparent.png"; 
+
+import strawberrypacket from "@/images/strawberrypacket.png"; 
 
 const bundles = [
   { id: 1, name: "The Taster", count: 1, price: 1200, save: 0, label: "Just a try" },
@@ -38,7 +37,7 @@ export default function ProductShowcase() {
           >
             {/* Ideally, put your Pouch PNG here. Using bowl as placeholder. */}
             <Image 
-              src={strawberrybowl} 
+              src={strawberrypacket} 
               alt="Freeze Dried Strawberry Pouch"
               fill 
               className="object-contain"
@@ -141,11 +140,11 @@ export default function ProductShowcase() {
                   <div className="p-6 bg-white text-sm font-sans text-charcoal/80 space-y-2">
                     <div className="flex justify-between border-b border-dashed border-charcoal/20 pb-2">
                       <span>Serving Size</span>
-                      <span className="font-bold">25g (Half Pack)</span>
+                      <span className="font-bold">50g</span>
                     </div>
                     <div className="flex justify-between border-b border-dashed border-charcoal/20 pb-2">
                       <span>Calories</span>
-                      <span className="font-bold">85 kcal</span>
+                      <span className="font-bold">185 kcal</span>
                     </div>
                     <div className="flex justify-between border-b border-dashed border-charcoal/20 pb-2">
                       <span>Total Fat</span>
@@ -153,7 +152,7 @@ export default function ProductShowcase() {
                     </div>
                     <div className="flex justify-between border-b border-dashed border-charcoal/20 pb-2">
                       <span>Sugars (Natural)</span>
-                      <span className="font-bold">14g</span>
+                      <span className="font-bold">24g</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Added Sugar</span>

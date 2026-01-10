@@ -4,7 +4,7 @@ import HomeBanner from "@/components/HomeBanner";
 import ProductGrid from "@/components/ProductGrid";
 import ProductShowcase from "@/components/ProductShowcase";
 import UsageSection from "@/components/UsageSection";
-
+import FAQSection from "@/components/FAQSection";
 
 
 
@@ -26,6 +26,7 @@ export default async function Home() {
 <DifferenceSection />
 <UsageSection />
 <ProductShowcase />
+<FAQSection />
       {/* 🔹 Featured Products */}
       {/* <div className="py-10">
         <ProductGrid />

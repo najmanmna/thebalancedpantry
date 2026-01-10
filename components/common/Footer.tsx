@@ -1,148 +1,99 @@
 "use client";
 
-import { useState } from "react";
+import React from "react";
 import Link from "next/link";
-import Logo from "../LogoWhite";
-import SocialMedia from "../SocialMedia";
-import { quickLinksData } from "@/constants";
-import { Mail } from "lucide-react";
-import { FaWhatsapp } from "react-icons/fa";
+import { Facebook, Instagram, Twitter, Mail, ArrowUpRight } from "lucide-react";
+// Use your White Logo here since the background is dark
+import LogoWhite from "../LogoBlack"; 
 
-const Footer = () => {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState("");
-  const [loading, setLoading] = useState(false); // ✅ new loading state
-
-  const handleSubscribe = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus("");
-    setLoading(true); // start loading
-
-    try {
-      const res = await fetch("/api/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Subscription failed");
-
-      setStatus(data.message);
-      setEmail(""); // clear input
-    } catch (err: any) {
-      setStatus(err.message);
-    } finally {
-      setLoading(false); // stop loading
-    }
-  };
-
+export default function Footer() {
   return (
-    <footer className="bg-black border-t">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="py-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {/* Newsletter + Brand */}
-          <div className="flex flex-col justify-between space-y-6">
-            <div>
-              <p className="text-gray-100 text-sm mb-4">
-                Sign up to our newsletter to receive exclusive offers.
-              </p>
-              <form className="flex flex-col gap-3" onSubmit={handleSubscribe}>
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading} // disable while subscribing
-                  className="flex-1 px-4 py-2 border border-gray-600 bg-transparent text-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
-                />
-                <button
-                  type="submit"
-                  disabled={loading} // disable while subscribing
-                  className="px-5 py-2 w-1/2 bg-gray-200 text-gray-800 font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? "Subscribing..." : "SUBSCRIBE"} {/* show text */}
-                </button>
-                {status && <p className="text-sm mt-1 text-gray-200">{status}</p>}
-              </form>
+    <footer className="bg-[#4A3728] text-[#F3EFE0] pt-20 pb-10 relative overflow-hidden">
+      
+      {/* Content Container */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 relative z-10">
+        
+        {/* Top Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 border-b border-[#F3EFE0]/10 pb-16">
+          
+          {/* Column 1: Brand (Span 4) */}
+          <div className="md:col-span-4 flex flex-col gap-6">
+            <div className="scale-90 origin-left mix-blend-difference">
+               <LogoWhite />
             </div>
-            <Logo className="w-40" />
+            <p className="font-sans text-[#F3EFE0]/60 leading-relaxed max-w-sm">
+              We believe snacking shouldn't be a sin. We freeze time (and fruit) to bring you the crunchiest, healthiest snacks in Sri Lanka.
+            </p>
+            <div className="flex gap-4">
+              <SocialBtn icon={Instagram} href="#" />
+              <SocialBtn icon={Facebook} href="#" />
+              <SocialBtn icon={Twitter} href="#" />
+            </div>
           </div>
 
-          {/* Quick Links */}
-          <div className="flex flex-col sm:ml-10">
-            <h3 className="font-medium text-white mb-4">COMPANY</h3>
-            <ul className="space-y-3 mb-6">
-              {quickLinksData?.map((item) => (
-                <li key={item?.title}>
-                  <Link
-                    href={item?.href}
-                    className="text-gray-300 hover:text-white text-sm font-normal transition-colors"
-                  >
-                    {item?.title}
-                  </Link>
-                </li>
-              ))}
+          {/* Column 2: Shop (Span 2) */}
+          <div className="md:col-span-2 md:col-start-6">
+            <h4 className="font-serif font-bold text-lg mb-6">Shop</h4>
+            <ul className="space-y-4 font-sans text-[#F3EFE0]/60 text-sm">
+              <li><Link href="#shop" className="hover:text-brandRed transition-colors">Strawberries</Link></li>
+              <li><Link href="#" className="hover:text-brandRed transition-colors">Durian (Coming Soon)</Link></li>
+              {/* <li><Link href="#" className="hover:text-brandRed transition-colors">Mixed Pack</Link></li>
+              <li><Link href="#" className="hover:text-brandRed transition-colors">Gift Bundles</Link></li> */}
             </ul>
-            <SocialMedia
-              className="text-white"
-              iconClassName="border-black hover:font-bold hover:text-white transition-colors"
-              tooltipClassName="bg-gray-800 text-white"
-            />
           </div>
 
-          {/* Reach Us */}
-          <div>
-            <h3 className="font-medium text-white mb-4">REACH US</h3>
-            <div className="space-y-4">
-              <p className="flex items-center gap-2 text-gray-300 text-sm">
-                <FaWhatsapp className="w-5 h-5 text-white" />
-                <a
-                  href="https://wa.me/+94775507940"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-white transition-colors"
-                >
-                  +94 775 507 940
-                </a>
-              </p>
-              <p className="flex items-center gap-2 text-gray-300 text-sm">
-                <Mail className="w-5 h-5 text-white" />
-                <a
-                  href="mailto:info@elvynstore.com"
-                  className="hover:text-white transition-colors"
-                >
-                  info@elvynstore.com
-                </a>
-              </p>
+          {/* Column 3: Company (Span 2) */}
+          <div className="md:col-span-2">
+            <h4 className="font-serif font-bold text-lg mb-6">Company</h4>
+            <ul className="space-y-4 font-sans text-[#F3EFE0]/60 text-sm">
+              <li><Link href="/our-story" className="hover:text-brandRed transition-colors">The Science</Link></li>
+              {/* <li><Link href="/track-order" className="hover:text-brandRed transition-colors">Track Order</Link></li> */}
+              {/* <li><Link href="#" className="hover:text-brandRed transition-colors">Wholesale</Link></li> */}
+              <li><Link href="#" className="hover:text-brandRed transition-colors">Contact Us</Link></li>
+            </ul>
+          </div>
+
+          {/* Column 4: Newsletter (Span 3) */}
+          <div className="md:col-span-3">
+            <h4 className="font-serif font-bold text-lg mb-4">Stay Crunchy</h4>
+            <p className="font-sans text-[#F3EFE0]/60 text-xs mb-4">
+              Get 10% off your first order and secret flavor drops.
+            </p>
+            <div className="flex gap-2">
+              <input 
+                type="email" 
+                placeholder="Email Address" 
+                className="bg-[#F3EFE0]/5 border border-[#F3EFE0]/10 rounded-lg px-4 py-3 text-sm text-[#F3EFE0] placeholder:text-[#F3EFE0]/20 focus:outline-none focus:border-brandRed w-full"
+              />
+              <button className="bg-brandRed text-[#F3EFE0] p-3 rounded-lg hover:bg-brandRed/90 transition-colors">
+                <ArrowUpRight className="w-5 h-5" />
+              </button>
             </div>
           </div>
+
         </div>
 
-        <div className="py-6 mb-6 sm:mb-0 border-t border-gray-700 text-center text-sm text-gray-400">
-          <p>
-            © {new Date().getFullYear()}{" "}
-            <span className="text-gray-100 font-semibold tracking-wide uppercase hover:text-white transition-colors">
-              Elvyn
-            </span>{" "}
-            . All rights reserved.
-          </p>
-          <p className="mt-1 text-xs">
-            Developed by{" "}
-            <a
-              href="https://www.ahamedwebstudio.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-semibold text-white hover:text-gray-400 transition-colors"
-            >
-              Ahamed Web Studio
-            </a>
-          </p>
+        {/* Bottom Bar */}
+        <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 font-sans text-xs text-[#F3EFE0]/40">
+          <p>© 2026 The Balanced Pantry. All rights reserved.</p>
+          <div className="flex gap-6">
+            <Link href="#" className="hover:text-[#F3EFE0]">Privacy Policy</Link>
+            <Link href="#" className="hover:text-[#F3EFE0]">Terms of Service</Link>
+          </div>
         </div>
+
       </div>
     </footer>
   );
-};
+}
 
-export default Footer;
+function SocialBtn({ icon: Icon, href }: { icon: any, href: string }) {
+  return (
+    <a 
+      href={href} 
+      className="w-10 h-10 rounded-full border border-[#F3EFE0]/10 flex items-center justify-center hover:bg-brandRed hover:border-brandRed hover:text-white transition-all text-[#F3EFE0]/60"
+    >
+      <Icon className="w-4 h-4" />
+    </a>
+  );
+}
