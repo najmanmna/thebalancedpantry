@@ -1,10 +1,11 @@
 [build]
-  command = "DISABLE_ESLINT_PLUGIN=true NEXT_DISABLE_TYPECHECK=true npm run build"
+  # Just the command here, no variables
+  command = "npm run build"
+  # Keep your publish directory as is (usually .next for Next.js)
   publish = ".next"
 
 [build.environment]
+  # Define the variables here instead
+  DISABLE_ESLINT_PLUGIN = "true"
+  NEXT_DISABLE_TYPECHECK = "true"
   NODE_VERSION = "20"
-  NETLIFY_DISABLE_SECRET_SCANNING = "true"
-
-[[plugins]]
-  package = "@netlify/plugin-nextjs"

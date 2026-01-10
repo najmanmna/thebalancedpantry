@@ -1,23 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // output: "standalone", // 👈 THIS IS MANDATORY FOR NETLIFY
   images: {
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "cdn.sanity.io",
-      },
-      {
-        protocol: "https",
-        hostname: "img.clerk.com",
-      },
+      { protocol: "https", hostname: "cdn.sanity.io" },
+      { protocol: "https", hostname: "img.clerk.com" },
+      { protocol: "https", hostname: "placehold.co" },
     ],
   },
-  // Skip TypeScript errors during production build
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Skip ESLint during production build
   eslint: {
     ignoreDuringBuilds: true,
   },
