@@ -154,10 +154,7 @@ export default function ProductShowcase() {
                       <span>Sugars (Natural)</span>
                       <span className="font-bold">24g</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Added Sugar</span>
-                      <span className="font-bold text-brandRed">0g</span>
-                    </div>
+                    
                   </div>
                 </motion.div>
               )}

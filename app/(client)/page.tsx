@@ -5,6 +5,7 @@ import ProductGrid from "@/components/ProductGrid";
 import ProductShowcase from "@/components/ProductShowcase";
 import UsageSection from "@/components/UsageSection";
 import FAQSection from "@/components/FAQSection";
+import BrandHero from "../../components/BrandHero";
 
 
 
@@ -21,12 +22,12 @@ export default async function Home() {
     <div className="bg-tech_bg_color pb-16">
       {/* 🔹 Hero Section */}
       {/* <HomeBanner /> */}
-      
+      <BrandHero />
 <Hero />
-<DifferenceSection />
+{/* <DifferenceSection /> */}
 <UsageSection />
 <ProductShowcase />
-<FAQSection />
+{/* <FAQSection /> */}
       {/* 🔹 Featured Products */}
       {/* <div className="py-10">
         <ProductGrid />
