@@ -3,7 +3,7 @@ import { backendClient } from "@/sanity/lib/backendClient";
 import { v4 as uuidv4 } from "uuid";
 import { sendSubscribeEmail } from "@/lib/sendSubscribeEmail";
 
-export const runtime = "nodejs";
+export const runtime = 'edge';
 
 // Shared bank details
 const bankDetails = `M/s Elvyn (Private) Limited

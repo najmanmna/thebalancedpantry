@@ -2,6 +2,7 @@
 import CategoryProducts from "@/components/CategoryProducts";
 import { getCategories, getMaterials } from "@/sanity/queries";
 import React from "react";
+export const runtime = 'edge';
 
 // Revalidate data every 60 seconds (ISR)
 export const revalidate = 60;
