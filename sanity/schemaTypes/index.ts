@@ -12,6 +12,7 @@ import { bannerType } from "./bannerType";
 // import { pageType } from "./page";
 
 import { settingsType } from "./settings";
+import { homepageType } from "./homepage";
 // import { promoCodeType } from "./promoCode";
 
 // import { marketingPopupType } from "./marketingPopup";
@@ -25,6 +26,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     orderType,
 orderItemType,
     bannerType,
+    homepageType
     // subscribersType,
     // pageType,
 

@@ -1,110 +1,115 @@
 "use client";
+
 import React from "react";
-import { Button } from "./ui/button";
-import { HiMinus, HiPlus } from "react-icons/hi2";
+import { Minus, Plus, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import useCartStore from "@/store";
-import { twMerge } from "tailwind-merge";
+import { cn } from "@/lib/utils";
 import type { Product } from "@/sanity.types";
 
 interface Props {
-  product: Product;
+  product: any; // Using the extended product type with stock fields
   itemKey: string;
   className?: string;
-  borderStyle?: string;
-  displayMode?: "default" | "overlay";
-  availableStock?: number; // 🔹 optional prop to pass available stock
+  displayMode?: "default" | "minimal"; // 'minimal' for tight spaces like grids
 }
 
 const QuantityButtons = ({
   product,
   itemKey,
   className,
-  borderStyle,
   displayMode = "default",
 }: Props) => {
-  // ✅ Always get the latest cart item from store
-  const cartItem = useCartStore((s) =>
-    s.items.find((i) => i.itemKey === itemKey)
-  );
+  const { items, increaseQuantity, decreaseQuantity, deleteCartProduct, getTotalBaseUnitsInCart } = useCartStore();
 
-  // quantity in cart
+  // 1. Get the specific line item (e.g., "Strawberries (3-Pack)")
+  const cartItem = items.find((i) => i.itemKey === itemKey);
   const itemCount = cartItem?.quantity ?? 0;
+  const bundleCount = cartItem?.bundleCount ?? 1; // Default to 1 if missing
 
-  // Use Infinity as fallback until stock refresh completes
-  const availableStock = cartItem?.variant?.availableStock ?? Infinity;
+  // 2. Stock Calculation
+  // We need to check if adding ONE more of this bundle would exceed the GLOBAL base unit stock
+  const openingStock = product?.openingStock ?? 0;
+  const stockOut = product?.stockOut ?? 0;
+  const maxRealStock = openingStock - stockOut;
+  
+  // How many base units of this product are currently in the cart (across all bundles)?
+  // We use a fallback calculation if the store helper isn't available immediately
+  const currentTotalBaseUnits = items
+    .filter((i) => i.product._id === product._id)
+    .reduce((total, i) => total + (i.quantity * (i.bundleCount || 1)), 0);
 
-  const addItem = useCartStore((s) => s.addItem);
-  const increaseQuantity = useCartStore((s) => s.increaseQuantity);
-  const decreaseQuantity = useCartStore((s) => s.decreaseQuantity);
+  const canIncrease = (currentTotalBaseUnits + bundleCount) <= maxRealStock;
 
-  const canIncrease = itemCount < availableStock;
-
+  // --- HANDLERS ---
   const handleAdd = () => {
-    if (!cartItem) return; // safety
     if (!canIncrease) {
-      toast.error("Cannot add more than available stock");
+      toast.error(`Max stock reached for ${product.name}`);
       return;
     }
-    if (itemCount === 0) {
-      addItem(product, cartItem.variant);
-    } else {
-      increaseQuantity(itemKey);
-    }
-    toast.success("Quantity increased successfully!");
+    increaseQuantity(itemKey);
   };
 
   const handleRemove = () => {
-    if (itemCount <= 0) return;
-    decreaseQuantity(itemKey);
-    toast.success(
-      itemCount > 1
-        ? "Quantity decreased successfully!"
-        : `${product?.name?.substring(0, 12)}${
-            product?.name && product.name.length > 12 ? "..." : ""
-          } removed!`
-    );
+    if (itemCount > 1) {
+      decreaseQuantity(itemKey);
+    } else {
+      deleteCartProduct(itemKey);
+      toast.success("Removed from pantry");
+    }
   };
 
-  const buttonClasses =
-    displayMode === "overlay"
-      ? "w-6 h-6 border-0 bg-black text-white hover:bg-black/80 hover:cursor-pointer"
-      : "w-6 h-6 border-0 hover:bg-tech_orange/20 hover:cursor-pointer";
-
-  const countClasses =
-    displayMode === "overlay"
-      ? "font-semibold text-sm w-6 text-center text-white"
-      : "font-semibold text-sm w-6 text-center text-tech_dark";
+  // --- STYLES ---
+  // "Default" = The Pill Shape (Cart Page)
+  // "Minimal" = Smaller, transparent (Grid View)
+  const isMinimal = displayMode === "minimal";
 
   return (
     <div
-      className={twMerge(
-        "flex items-center gap-1 pb-1 text-base",
-        borderStyle,
+      className={cn(
+        "flex items-center justify-between transition-all",
+        isMinimal 
+          ? "gap-2" 
+          : "gap-4 bg-white px-3 py-2 rounded-full border border-charcoal/10 shadow-sm w-fit",
         className
       )}
     >
-      <Button
-        variant="outline"
-        size="icon"
-        className={twMerge(buttonClasses)}
+      <button
         onClick={handleRemove}
-        disabled={itemCount === 0}
+        className={cn(
+          "flex items-center justify-center transition-colors rounded-full",
+          isMinimal 
+            ? "w-6 h-6 bg-charcoal/5 hover:bg-red-100 hover:text-red-500" 
+            : "w-6 h-6 hover:bg-charcoal/5 text-charcoal/60 hover:text-charcoal"
+        )}
       >
-        <HiMinus />
-      </Button>
+        {itemCount === 1 ? (
+          <Trash2 className="w-3.5 h-3.5" />
+        ) : (
+          <Minus className="w-3.5 h-3.5" />
+        )}
+      </button>
 
-      <span className={countClasses}>{itemCount}</span>
+      <span className={cn(
+        "font-serif font-bold text-charcoal select-none tabular-nums text-center",
+        isMinimal ? "text-sm min-w-[1.2rem]" : "text-base min-w-[1.5rem]"
+      )}>
+        {itemCount}
+      </span>
 
-      <Button
-        variant="outline"
-        size="icon"
-        className={twMerge(buttonClasses)}
+      <button
         onClick={handleAdd}
         disabled={!canIncrease}
+        className={cn(
+          "flex items-center justify-center transition-colors rounded-full",
+          isMinimal 
+            ? "w-6 h-6 bg-charcoal/5 hover:bg-brandRed/10 hover:text-brandRed" 
+            : "w-6 h-6 hover:bg-charcoal/5 text-charcoal/60 hover:text-charcoal",
+          !canIncrease && "opacity-30 cursor-not-allowed hover:bg-transparent hover:text-charcoal/60"
+        )}
       >
-        <HiPlus />
-      </Button>
+        <Plus className="w-3.5 h-3.5" />
+      </button>
     </div>
   );
 };

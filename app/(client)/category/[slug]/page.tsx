@@ -1,46 +1,28 @@
-// // app/category/[slug]/page.tsx
-// import Container from "@/components/Container";
-// import CategoryProducts from "@/components/CategoryProducts";
-// import Title from "@/components/Title";
-// import { getCategories, getMaterials } from "@/sanity/queries";
-// import React from "react";
+// app/category/[slug]/page.tsx
+import CategoryProducts from "@/components/CategoryProducts";
+import { getCategories, getMaterials } from "@/sanity/queries";
+import React from "react";
 
-// const CategoryPage = async ({
-//   params,
-// }: {
-//   params: { slug: string };
-// }) => {
-//   const { slug } = params;
-//   const categories = await getCategories();
-//   const materials = await getMaterials();
+// Revalidate data every 60 seconds (ISR)
+export const revalidate = 60;
 
-//   // --- 👇 1. Check if this is the "All Bags" page ---
-//   const isAllProductsPage = slug === "all";
+const CategoryPage = async ({ params }: { params: { slug: string } }) => {
+  // 1. Fetch data on the server
+  const categories = await getCategories();
+  const materials = await getMaterials(); // These act as your Dietary Preferences now
+  
+  // 2. Extract slug
+  const { slug } = params;
 
-//   return (
-//     <div>
-//       <Container className="py-10">
-//         {/* --- 👇 2. Conditionally render the title --- */}
-//           {/* {isAllProductsPage ? (
-//             <Title className="text-xl">All Products</Title>
-//           ) : (
-//             <Title className="text-xl">
-//               Products by Category:{" "}
-//               <span className="font-bold text-green-600 capitalize tracking-wide">
-//                 {slug}
-//               </span>
-//             </Title>
-//           )} */}
-//         {/* --- ------------------------------------ --- */}
+  return (
+    // 3. Render the main component directly. 
+    // We removed <Container> because CategoryProducts handles the full-width background itself.
+    <CategoryProducts
+      categories={categories}
+      slug={slug}
+      materials={materials}
+    />
+  );
+};
 
-//         <CategoryProducts
-//           categories={categories}
-//           slug={slug} // Pass the slug ("all" or "tote-bags")
-//           materials={materials}
-//         />
-//       </Container>
-//     </div>
-//   );
-// };
-
-// export default CategoryPage;
+export default CategoryPage;

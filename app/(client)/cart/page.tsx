@@ -1,344 +1,285 @@
-// "use client";
-// import React, { useState } from "react";
-// import PriceFormatter from "@/components/PriceFormatter";
-// import QuantityButtons from "@/components/QuantityButtons";
-// import { Button } from "@/components/ui/button";
-// import { Separator } from "@/components/ui/separator";
-// import { urlFor } from "@/sanity/lib/image";
-// import useCartStore from "@/store";
-// import { ArrowLeft, ShoppingBag, Trash } from "lucide-react";
-// import Image from "next/image";
-// import Link from "next/link";
-// import toast from "react-hot-toast";
-// import EmptyCart from "@/components/EmptyCart";
-// import { client } from "@/sanity/lib/client";
-// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-// import Container from "@/components/Container";
-// import Loading from "@/components/Loading";
-// import { useRouter } from "next/navigation";
-// import { sendGAEvent } from "@/lib/gtag";
+"use client";
 
-// const CartPage = () => {
-//   const items = useCartStore((s) => s.items);
-//   const deleteCartProduct = useCartStore((s) => s.deleteCartProduct);
-//   const resetCart = useCartStore((s) => s.resetCart);
-//   // updateItemVariant is removed from store in simplified version
-//   const router = useRouter();
-//   const [loading, setLoading] = useState(false);
+import React, { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ArrowRight, Trash2, ShoppingBag, ArrowLeft, PackageOpen } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import toast from "react-hot-toast";
 
-//   const handleResetCart = () => {
-//     if (confirm("Are you sure to reset your Cart?")) {
-//       resetCart();
-//       toast.success("Your cart reset successfully!");
-//     }
-//   };
+import { Button } from "@/components/ui/button";
+import { urlFor } from "@/sanity/lib/image";
+import { client } from "@/sanity/lib/client";
+import useCartStore from "@/store";
+import { sendGAEvent } from "@/lib/gtag";
+import PriceFormatter from "@/components/PriceFormatter";
+import QuantityButtons from "@/components/QuantityButtons";
+import Loading from "@/components/Loading";
 
-//   const handleDelete = (itemKey: string) => {
-//     deleteCartProduct(itemKey);
-//     toast.success("Product deleted successfully!");
-//   };
+const CartPage = () => {
+  const items = useCartStore((s) => s.items);
+  const deleteCartProduct = useCartStore((s) => s.deleteCartProduct);
+  const resetCart = useCartStore((s) => s.resetCart);
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
-//   const handleProceedToCheckout = async () => {
-//     if (!items.length) return;
-//     setLoading(true);
+  // --- ACTIONS ---
+  const handleResetCart = () => {
+    if (confirm("Clear your entire pantry selection?")) {
+      resetCart();
+      toast.success("Cart cleared");
+    }
+  };
 
-//     try {
-//       // 1. Fetch live stock from Sanity (Simplified Query)
-//       const productIds = items.map((i) => i.product._id);
-//   const query = `*[_type=="product" && _id in $ids]{
-//         _id,
-//         name,
-//         openingStock,
-//         stockOut,
-//         sku,
-//         images[] {
-//           asset
-//         }
-//       }`;
-//       const freshProducts = await client.fetch(query, { ids: productIds }, { useCdn: false });
-//       let hasMismatch = false;
+  const handleDelete = (itemKey: string) => {
+    deleteCartProduct(itemKey);
+    toast.success("Removed from pantry");
+  };
 
-//       for (const item of items) {
-//         const freshProduct = freshProducts.find(
-//           (p: any) => p._id === item.product._id
-//         );
+  // --- CHECKOUT LOGIC ---
+  const handleProceedToCheckout = async () => {
+    if (!items.length) return;
+    setLoading(true);
+
+    try {
+      const productIds = items.map((i) => i.product._id);
+      
+      const query = `*[_type=="product" && _id in $ids]{
+        _id,
+        name,
+        openingStock,
+        stockOut
+      }`;
+      
+      const freshProducts = await client.fetch(query, { ids: productIds }, { useCdn: false });
+      let hasMismatch = false;
+
+      for (const item of items) {
+        const freshProduct = freshProducts.find((p: any) => p._id === item.product._id);
         
-//         if (!freshProduct) {
-//              // If product no longer exists in DB, we should probably warn
-//              toast.error(`Product "${item.product.name}" is no longer available.`);
-//              hasMismatch = true;
-//              continue;
-//         }
+        if (!freshProduct) {
+             toast.error(`Product "${item.product.name}" is no longer available.`);
+             hasMismatch = true;
+             continue;
+        }
 
-//         // 2. Calculate simplified stock
-//         const opening = freshProduct.openingStock ?? 0;
-//         const out = freshProduct.stockOut ?? 0;
-//         const liveStock = opening - out;
+        const liveStock = (freshProduct.openingStock ?? 0) - (freshProduct.stockOut ?? 0);
+        
+        if (item.quantity > liveStock) {
+          hasMismatch = true;
+          toast.error(`${item.product.name}: Only ${liveStock} packs left.`);
+        }
+      }
 
-//         // 3. Check availability
-//         if (item.quantity > liveStock) {
-//           hasMismatch = true;
-//           toast.error(
-//             `${item.product.name} quantity reduced to available stock (${liveStock}). Please adjust.`
-//           );
-//           // Optional: You could auto-correct the quantity here if your store supports a specific 'updateQuantity' action
-//         }
-//       }
+      if (hasMismatch) {
+        setLoading(false);
+        return;
+      }
 
-//       if (hasMismatch) {
-//         setLoading(false);
-//         return; // Stop checkout
-//       }
+      const cartTotal = items.reduce((total, item) => total + (item.price || 0) * item.quantity, 0);
+      sendGAEvent("begin_checkout", {
+        currency: "LKR",
+        value: cartTotal,
+        items: items.map((item) => ({
+          item_id: item.product._id,
+          item_name: item.product.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+      });
 
-//       // 4. GA4 Tracking
-//       const cartTotal = items.reduce((total, item) => total + (item.product.price || 0) * item.quantity, 0);
+      router.push("/checkout");
+    } catch (error) {
+      console.error(error);
+      toast.error("Network error. Please try again.");
+      setLoading(false);
+    }
+  };
 
-//       sendGAEvent("begin_checkout", {
-//         currency: "LKR",
-//         value: cartTotal,
-//         items: items.map((item) => ({
-//           item_id: item.product._id,
-//           item_name: item.product.name,
-//           price: item.product.price,
-//           quantity: item.quantity,
-//         })),
-//       });
+  // --- CALCULATIONS ---
+  const subtotal = items.reduce((t, it) => t + (it.price ?? 0) * it.quantity, 0);
+  // Shipping is calculated at checkout based on address
+  const total = subtotal; 
 
-//       // 5. Navigate
-//       router.push("/checkout");
-//     } catch (error) {
-//       console.error(error);
-//       toast.error("Failed to validate stock. Please try again.");
-//       setLoading(false);
-//     }
-//   };
+  return (
+    <>
+      {loading && <Loading />}
+      
+      <div className="bg-cream min-h-screen py-12 sm:py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8">
+          
+          {/* Header */}
+          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
+            <div>
+              <span className="font-sans text-xs font-bold tracking-[0.2em] text-brandRed uppercase">
+                Your Selection
+              </span>
+              <h1 className="font-serif text-4xl sm:text-5xl font-black text-charcoal mt-2">
+                Your <span className="italic font-light">Pantry.</span>
+              </h1>
+            </div>
+            <Link href="/shop" className="flex items-center gap-2 font-sans font-bold text-charcoal hover:text-brandRed transition-colors border-b border-transparent hover:border-brandRed pb-1">
+              <ArrowLeft className="w-4 h-4" /> Continue Shopping
+            </Link>
+          </div>
 
-//   // Pricing Logic
-//   const total = items.reduce((t, it) => {
-//     const price = it.product.price ?? 0;
-//     // Assuming 'discount' in schema is a percentage, this calculates the "original" price
-//     // If you don't have discounts in the simplified schema, you can remove this part
-//     const discount = 0; 
-//     return t + (price + discount) * it.quantity;
-//   }, 0);
+          {items.length > 0 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
+              
+              {/* --- LEFT: CART ITEMS LIST --- */}
+              <div className="lg:col-span-2 space-y-6">
+                <AnimatePresence>
+                  {items.map((item) => {
+                    const imageRef = item.product.mainImage || item.product.images?.[0];
+                    
+                    return (
+                      <motion.div 
+                        key={item.itemKey}
+                        layout
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, x: -50 }}
+                        className="bg-white p-4 sm:p-6 rounded-[2rem] border border-charcoal/5 shadow-sm flex flex-col sm:flex-row gap-6 items-center"
+                      >
+                        {/* Image */}
+                        <div className="relative w-full sm:w-32 aspect-square bg-[#F3EFE0] rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0">
+                          {imageRef ? (
+                             <Image
+                               src={urlFor(imageRef).url()}
+                               alt={item.product.name}
+                               fill
+                               className="object-contain p-2"
+                             />
+                          ) : (
+                             <PackageOpen className="w-8 h-8 text-charcoal/20" />
+                          )}
+                        </div>
 
-//   const subtotal = items.reduce(
-//     (t, it) => t + (it.product.price ?? 0) * it.quantity,
-//     0
-//   );
+                        {/* Details */}
+                        <div className="flex-1 text-center sm:text-left w-full">
+                          <h3 className="font-serif text-xl font-bold text-charcoal leading-tight mb-1">
+                            {item.product.name.split('(')[0]}
+                          </h3>
+                          
+                          <div className="inline-block bg-charcoal/5 px-3 py-1 rounded-full mb-3">
+                             <span className="font-sans text-xs font-bold text-charcoal/60 uppercase tracking-wide">
+                               {item.bundleTitle || "Single Pack"}
+                             </span>
+                          </div>
 
-//   return (
-//     <>
-//       {loading && <Loading />}
-//       <div className="pb-20 md:pb-10">
-//         <Container className="bg-tech_white mt-7 pb-5 rounded-md">
-//           {items?.length ? (
-//             <>
-//               <div className="flex items-center gap-2 py-5">
-//                 <ShoppingBag className="h-5 w-5 md:h-6 md:w-6" />
-//                 <h1 className="text-xl md:text-2xl font-semibold">
-//                   Shopping Cart
-//                 </h1>
-//               </div>
+                          <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-8 mt-2">
+                             <div className="text-left">
+                                <span className="block text-[10px] uppercase tracking-wider text-charcoal/40 font-bold">Price</span>
+                                <PriceFormatter amount={item.price} className="font-sans font-medium text-charcoal" />
+                             </div>
+                             
+                             <div className="text-left">
+                                <span className="block text-[10px] uppercase tracking-wider text-charcoal/40 font-bold mb-1">Qty</span>
+                                <QuantityButtons product={item.product} itemKey={item.itemKey} />
+                             </div>
+                          </div>
+                        </div>
 
-//               {/* Desktop View */}
-//               <div className="hidden md:block overflow-x-auto bg-white rounded-lg border mb-6">
-//                 <table className="w-full">
-//                   <thead className="bg-gray-50 border-b">
-//                     <tr>
-//                       <th className="py-3 px-4 text-left">Image</th>
-//                       <th className="py-3 px-4 text-left">Product Name</th>
-//                       {/* Removed Color Column */}
-//                       <th className="py-3 px-4 text-center">Quantity</th>
-//                       <th className="py-3 px-4 text-right">Unit Price</th>
-//                       <th className="py-3 px-4 text-right">Total</th>
-//                       <th className="py-3 px-4 text-center">Action</th>
-//                     </tr>
-//                   </thead>
-//                   <tbody>
-//                     {items.map(({ product, itemKey, quantity }) => {
-//                       // 🔹 Simplified Image Logic
-//                       const thumbnail = product.images?.[0];
+                        {/* Total & Action */}
+                        <div className="flex flex-row sm:flex-col items-center justify-between w-full sm:w-auto gap-4 sm:gap-8 border-t sm:border-t-0 border-charcoal/5 pt-4 sm:pt-0">
+                           <div className="text-right">
+                              <span className="block text-[10px] uppercase tracking-wider text-charcoal/40 font-bold sm:hidden">Total</span>
+                              <PriceFormatter amount={item.price * item.quantity} className="font-serif text-xl font-bold text-brandRed" />
+                           </div>
+                           
+                           <button 
+                             onClick={() => handleDelete(item.itemKey)}
+                             className="w-10 h-10 rounded-full border border-charcoal/10 flex items-center justify-center text-charcoal/40 hover:text-red-500 hover:border-red-500/30 hover:bg-red-50 transition-all"
+                             title="Remove Item"
+                           >
+                             <Trash2 className="w-4 h-4" />
+                           </button>
+                        </div>
 
-//                       return (
-//                         <tr key={itemKey} className="border-b">
-//                           <td className="py-4 px-4">
-//                             {thumbnail && (
-//                               <Link href={`/product/${product?.slug?.current}`}>
-//                                 <Image
-//                                   src={urlFor(thumbnail).url()}
-//                                   alt={product?.name || "Product image"}
-//                                   width={80}
-//                                   height={80}
-//                                   className="border rounded-md object-cover"
-//                                 />
-//                               </Link>
-//                             )}
-//                           </td>
-//                           <td className="py-4 px-4">
-//                             <Link
-//                               href={`/product/${product?.slug?.current}`}
-//                               className="font-medium hover:text-primary transition-colors"
-//                             >
-//                               {product?.name}
-//                             </Link>
-//                             {product.sku && (
-//                                 <p className="text-xs text-gray-400 mt-1">SKU: {product.sku}</p>
-//                             )}
-//                           </td>
-//                           {/* Removed Color Cell */}
-//                           <td className="py-4 px-4 text-center">
-//                             <QuantityButtons
-//                               product={product}
-//                               itemKey={itemKey}
-//                             />
-//                           </td>
-//                           <td className="py-4 px-4 text-right">
-//                             <PriceFormatter amount={product?.price as number} />
-//                           </td>
-//                           <td className="py-4 px-4 text-right font-medium">
-//                             <PriceFormatter
-//                               amount={(product?.price as number) * quantity}
-//                             />
-//                           </td>
-//                           <td className="py-4 px-4 text-center">
-//                             <button
-//                               onClick={() => handleDelete(itemKey)}
-//                               className="text-red-500 hover:text-red-700 hover:cursor-pointer hoverEffect"
-//                             >
-//                               <Trash className="h-5 w-5" />
-//                             </button>
-//                           </td>
-//                         </tr>
-//                       );
-//                     })}
-//                   </tbody>
-//                 </table>
-//               </div>
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
+                
+                <div className="text-center sm:text-left pt-2">
+                   <button 
+                     onClick={handleResetCart}
+                     className="text-xs font-bold uppercase tracking-widest text-charcoal/40 hover:text-red-500 transition-colors"
+                   >
+                     Empty Entire Pantry
+                   </button>
+                </div>
+              </div>
 
-//               {/* Mobile View */}
-//               <div className="md:hidden space-y-4">
-//                 {items.map(({ product, itemKey, quantity }) => {
-//                   const thumbnail = product.images?.[0];
 
-//                   return (
-//                     <Card key={itemKey} className="overflow-hidden">
-//                       <div className="flex p-3 border-b">
-//                         {thumbnail && (
-//                           <Link
-//                             href={`/product/${product?.slug?.current}`}
-//                             className="mr-3"
-//                           >
-//                             <Image
-//                               src={urlFor(thumbnail).url()}
-//                               alt={product?.name || "Product image"}
-//                               width={80}
-//                               height={80}
-//                               className="border rounded-md object-cover"
-//                             />
-//                           </Link>
-//                         )}
-//                         <div className="flex-1">
-//                           <Link
-//                             href={`/product/${product?.slug?.current}`}
-//                             className="font-medium hover:text-primary transition-colors"
-//                           >
-//                             {product?.name}
-//                           </Link>
-//                           {/* Removed Color Text */}
-//                         </div>
-//                         <button
-//                           onClick={() => handleDelete(itemKey)}
-//                           className="text-red-500"
-//                         >
-//                           <Trash className="h-5 w-5" />
-//                         </button>
-//                       </div>
-//                       <div className="p-3 flex justify-between items-center">
-//                         <div>
-//                           <p className="text-sm text-gray-500">Unit Price:</p>
-//                           <PriceFormatter
-//                             amount={product?.price as number}
-//                             className="font-medium"
-//                           />
-//                         </div>
-//                         <QuantityButtons product={product} itemKey={itemKey} />
-//                         <div className="text-right">
-//                           <p className="text-sm text-gray-500">Total:</p>
-//                           <PriceFormatter
-//                             amount={(product?.price as number) * quantity}
-//                             className="font-bold"
-//                           />
-//                         </div>
-//                       </div>
-//                     </Card>
-//                   );
-//                 })}
-//               </div>
+              {/* --- RIGHT: ORDER SUMMARY --- */}
+              <div className="lg:col-span-1 sticky top-24">
+                <div className="bg-white p-8 rounded-[2.5rem] border border-charcoal/5 shadow-lg relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-brandRed/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
 
-//               <div className="grid md:grid-cols-3 gap-6 mt-6">
-//                 <div className="md:col-span-2 space-y-4">
-//                   <div className="flex flex-col sm:flex-row gap-3 mt-6">
-//                     <Link href="/" className="flex-1">
-//                       <Button
-//                         variant="outline"
-//                         className="w-full flex items-center gap-2"
-//                       >
-//                         <ArrowLeft className="h-4 w-4" /> Continue Shopping
-//                       </Button>
-//                     </Link>
-//                     <Button
-//                       onClick={handleResetCart}
-//                       variant="destructive"
-//                       className="flex-1"
-//                     >
-//                       Reset Cart
-//                     </Button>
-//                   </div>
-//                 </div>
+                  <h2 className="font-serif text-2xl font-black text-charcoal mb-6">Order Summary</h2>
+                  
+                  <div className="space-y-4 mb-8">
+                    <div className="flex justify-between items-center text-charcoal/70 font-sans text-sm">
+                       <span>Subtotal</span>
+                       <PriceFormatter amount={subtotal} />
+                    </div>
+                    
+                    {/* Updated Shipping Logic */}
+                    <div className="flex justify-between items-center text-charcoal/70 font-sans text-sm">
+                       <span>Shipping</span>
+                       <span className="text-xs font-bold uppercase tracking-wider text-charcoal/40">Calculated at Checkout</span>
+                    </div>
+                    
+                    <div className="h-px bg-charcoal/10 my-2"></div>
+                    
+                    <div className="flex justify-between items-center text-charcoal font-bold text-lg">
+                       <span className="font-serif">Estimated Total</span>
+                       <PriceFormatter amount={total} className="text-brandRed" />
+                    </div>
+                  </div>
 
-//                 <div>
-//                   <Card className="bg-white">
-//                     <CardHeader>
-//                       <CardTitle>Order Summary</CardTitle>
-//                     </CardHeader>
-//                     <CardContent className="space-y-4">
-//                       <div className="flex justify-between">
-//                         <span>Subtotal</span>
-//                         <PriceFormatter amount={total} />
-//                       </div>
-//                       <div className="flex justify-between">
-//                         <span>Discount</span>
-//                         <PriceFormatter amount={subtotal - total} />
-//                       </div>
-//                       <Separator />
-//                       <div className="flex justify-between font-semibold text-lg">
-//                         <span>Total</span>
-//                         <PriceFormatter
-//                           amount={subtotal}
-//                           className="text-lg font-bold text-black"
-//                         />
-//                       </div>
-//                       <Button
-//                         onClick={handleProceedToCheckout}
-//                         disabled={loading}
-//                         className="w-full rounded-md font-semibold tracking-wide mt-4"
-//                         size="lg"
-//                       >
-//                         {loading ? "Processing..." : "Proceed to Checkout"}
-//                       </Button>
-//                     </CardContent>
-//                   </Card>
-//                 </div>
-//               </div>
-//             </>
-//           ) : (
-//             <EmptyCart />
-//           )}
-//         </Container>
-//       </div>
-//     </>
-//   );
-// };
+                  <Button
+                    onClick={handleProceedToCheckout}
+                    disabled={loading}
+                    className="w-full bg-brandRed hover:bg-brandRed/90 text-cream font-serif font-bold text-lg h-14 rounded-2xl shadow-[4px_4px_0px_0px_#4A3728] hover:shadow-[2px_2px_0px_0px_#4A3728] hover:translate-y-[2px] transition-all"
+                  >
+                    {loading ? "Processing..." : "Secure Checkout"}
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                  
+                  <div className="mt-6 flex items-center justify-center gap-2 text-charcoal/40">
+                     <ShoppingBag className="w-4 h-4" />
+                     <span className="text-[10px] font-bold uppercase tracking-widest">Secure Transaction</span>
+                  </div>
 
-// export default CartPage;
+                </div>
+              </div>
+
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[3rem] border border-charcoal/5 text-center px-4">
+               <div className="w-24 h-24 bg-[#F3EFE0] rounded-full flex items-center justify-center mb-6">
+                  <ShoppingBag className="w-10 h-10 text-charcoal/40" />
+               </div>
+               <h2 className="font-serif text-3xl font-bold text-charcoal mb-3">Your pantry is empty.</h2>
+               <p className="font-sans text-charcoal/60 max-w-md mb-8">
+                 It looks like you haven't discovered our crunchy goodness yet. 
+                 Check out our latest drops.
+               </p>
+               <Link href="/shop">
+                 <Button className="bg-brandRed text-cream font-serif font-bold px-8 py-6 rounded-full text-lg shadow-md hover:translate-y-[-2px] transition-transform">
+                   Start Shopping
+                 </Button>
+               </Link>
+            </div>
+          )}
+
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default CartPage;

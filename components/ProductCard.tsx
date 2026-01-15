@@ -1,125 +1,103 @@
-// src/components/ProductCard.tsx
 "use client";
 
 import React, { useState } from "react";
-import PriceView from "./PriceView";
 import Link from "next/link";
 import Image from "next/image";
+import { ArrowUpRight } from "lucide-react";
 import { urlFor } from "@/sanity/lib/image";
-import { cn } from "@/lib/utils";
+import PriceFormatter from "./PriceFormatter";
+
+// Background colors cycle for variety (matching your PantryGrid logic)
+const BG_COLORS = [
+  "bg-[#FFF3E0]", // Light Orange
+  "bg-[#F3E5F5]", // Light Purple
+  "bg-[#E0F2F1]", // Light Teal
+  "bg-[#F9F7F2]", // Light Cream
+];
 
 const ProductCard = ({ product }: { product: any }) => {
-  // 1. Image Logic (Top Level)
-  const images = product?.images ?? [];
-  const primaryImage = images[0];
-  const secondaryImage = images[1];
+  const [isHovered, setIsHovered] = useState(false);
 
-  // 2. Stock Logic (Calculated in GROQ)
-  const stock = product?.availableStock ?? 0;
-  const isOutOfStock = stock <= 0;
+  // 1. Image Logic (Handle Single vs Array)
+  // New schema uses 'mainImage', older simplified used 'images[]'
+  // We prioritize mainImage, then fallback to images[0]
+  const imageRef = product.mainImage || product.images?.[0];
 
-  // 3. Status & Discount Logic
-  const status = product?.status; // "new" | "hot" | "best"
-  const discount = product?.discount ?? 0;
-  const hasDiscount = discount > 0;
+  // 2. Stock Logic
+  const openingStock = product?.openingStock ?? 0;
+  const stockOut = product?.stockOut ?? 0;
+  const availableStock = openingStock - stockOut;
+  const isOutOfStock = availableStock <= 0;
 
-  // 4. State
-  const [hovered, setHovered] = useState(false);
+  // 3. Random Pastel Background (Deterministic based on ID string length)
+  const bgIndex = (product._id?.length || 0) % BG_COLORS.length;
+  const bgColor = BG_COLORS[bgIndex];
 
   return (
-    <div
-      className="bg-white border rounded-lg group overflow-hidden text-sm relative transition-all duration-300 hover:shadow-lg"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+    <Link 
+      href={`/product/${product?.slug?.current || product?.slug || ""}`}
+      className="group block relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative w-full aspect-square overflow-hidden bg-gray-100">
+      {/* --- IMAGE CONTAINER --- */}
+      <div className={`relative w-full aspect-[4/5] ${bgColor} rounded-[2rem] mb-4 overflow-hidden border border-charcoal/5 transition-all duration-300 group-hover:shadow-md`}>
         
-        {/* --- BADGES --- */}
-        <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
-          {/* Out of Stock Badge */}
-          {isOutOfStock && (
-            <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded">
-              SOLD OUT
-            </span>
-          )}
-
-          {/* Status Badges */}
-          {!isOutOfStock && status === "new" && (
-            <span className="bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded">
-              NEW ARRIVAL
-            </span>
-          )}
-          {!isOutOfStock && status === "hot" && (
-            <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded">
-              HOT SELLING
-            </span>
-          )}
-           {!isOutOfStock && status === "best" && (
-            <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded">
-              BEST DEAL
-            </span>
-          )}
+        {/* Badges */}
+        <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+           {isOutOfStock ? (
+             <span className="bg-charcoal text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+               Sold Out
+             </span>
+           ) : product.badge ? (
+             <span className="bg-white/90 text-charcoal text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border border-charcoal/5 backdrop-blur-sm">
+               {product.badge}
+             </span>
+           ) : null}
         </div>
 
-        {/* Discount Badge (Right Side) */}
-        {hasDiscount && !isOutOfStock && (
-          <span className="absolute top-2 right-2 bg-black text-white text-[10px] font-bold px-2 py-1 rounded z-10">
-            -{discount}%
-          </span>
-        )}
+        {/* Product Image */}
+        <div className="absolute inset-0 flex items-center justify-center p-8 group-hover:scale-110 transition-transform duration-500 ease-in-out">
+           {imageRef ? (
+             <Image
+               src={urlFor(imageRef).url()}
+               alt={product?.name || "Product Image"}
+               width={500}
+               height={500}
+               className={`object-contain drop-shadow-lg transition-all duration-500 ${isOutOfStock ? "opacity-50 grayscale" : ""}`}
+             />
+           ) : (
+             <div className="text-charcoal/20 font-serif italic">No Image</div>
+           )}
+        </div>
 
-        {/* --- IMAGE --- */}
-        <Link href={`/product/${product?.slug?.current || ""}`} className="block w-full h-full">
-          {primaryImage ? (
-            <Image
-              src={
-                hovered && secondaryImage
-                  ? urlFor(secondaryImage).width(500).height(500).url()
-                  : urlFor(primaryImage).width(500).height(500).url()
-              }
-              alt={product?.name || "Product Image"}
-              width={500}
-              height={500}
-              className={cn(
-                "w-full h-full object-cover transition-transform duration-500",
-                isOutOfStock ? "opacity-50 grayscale" : "group-hover:scale-105"
-              )}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-200">
-              No Image
-            </div>
-          )}
-        </Link>
+        {/* Floating Action Button (Appears on Hover) */}
+        <div className={`absolute bottom-4 right-4 transition-all duration-300 transform ${isHovered ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}>
+           <div className="w-10 h-10 bg-brandRed text-cream rounded-full flex items-center justify-center shadow-lg">
+              <ArrowUpRight className="w-5 h-5" />
+           </div>
+        </div>
       </div>
 
       {/* --- DETAILS --- */}
-      <div className="p-4 flex flex-col gap-2">
-        <Link 
-          href={`/product/${product?.slug?.current || ""}`}
-          className="hover:text-black transition-colors"
-        >
-          <h3 className="text-gray-800 font-medium line-clamp-1" title={product?.name}>
-            {product?.name}
-          </h3>
-        </Link>
-
-        {/* Categories (Optional) */}
-        {product?.categories && product.categories.length > 0 && (
-          <p className="text-xs text-gray-500 truncate">
-            {Array.isArray(product.categories) ? product.categories.join(", ") : product.categories}
+      <div className="pl-1">
+        <h3 className="font-serif text-2xl font-bold text-charcoal leading-tight mb-1 group-hover:text-brandRed transition-colors">
+          {product?.name}
+        </h3>
+        
+        {/* Optional Subtitle */}
+        {product.subtitle && (
+          <p className="font-sans text-xs text-charcoal/40 uppercase tracking-wider mb-1 line-clamp-1">
+            {product.subtitle}
           </p>
         )}
 
-        <div className="flex items-center justify-between mt-1">
-          <PriceView
-            price={product?.price}
-            discount={product?.discount}
-            className="text-base"
-          />
-        </div>
+        <PriceFormatter 
+          amount={product?.price} 
+          className="font-sans text-charcoal/60 font-medium" 
+        />
       </div>
-    </div>
+    </Link>
   );
 };
 

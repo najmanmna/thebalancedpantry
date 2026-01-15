@@ -6,7 +6,7 @@
 @plugin 'tailwindcss-animate';
 
 html, body {
-  overflow-x: hidden;
+  /* overflow-x: hidden; */
 }
 
 @custom-variant dark (&:is(.dark *));

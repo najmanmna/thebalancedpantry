@@ -197,18 +197,44 @@ const PRODUCT_BY_SLUG_QUERY = defineQuery(`
     name,
     slug,
     sku,
+    subtitle,  // 🔹 New: For the hero text
+    badge,     // 🔹 New: For "Best Seller" tags
     description,
     price,
     
-    // 🔹 Simplified Stock Calculation
+    // 🔹 Inventory Logic
     openingStock,
     stockOut,
     "availableStock": coalesce(openingStock, 0) - coalesce(stockOut, 0),
     
-    // 🔹 Top-level Images
-    images[] {
+    // 🔹 Imagery (Updated structure)
+    mainImage {
+      asset
+    },
+    gallery[] {
       _key,
       asset
+    },
+
+    // 🔹 Business Logic (Bundles)
+    bundleOptions[] {
+      title,
+      count,
+      price,
+      savings,
+      tag
+    },
+
+    // 🔹 Storytelling & Trust
+    benefits, // The "Trust Stamps" array
+
+    // 🔹 Health Data
+    nutrition {
+      servingSize,
+      calories,
+      sugar,
+      protein,
+      fat
     },
 
     categories[]->{

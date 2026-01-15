@@ -1,131 +1,294 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import AddToCartButton from "@/components/AddToCartButton";
-import ImageView from "@/components/ImageView";
-import PriceView from "@/components/PriceView";
-import toast from "react-hot-toast";
-import Container from "@/components/Container";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { Star, Minus, Plus, ChevronDown, Check, ShieldCheck, Leaf } from "lucide-react";
 import useCartStore from "@/store";
 import Loading from "@/components/Loading";
-import { sendGAEvent } from "@/lib/gtag";
+import { urlFor } from "@/sanity/lib/image";
+import { toast } from "react-hot-toast";
 
-export default function ProductClient({ product }: { product: any }) {
+// Helper Interface for Props
+interface Props {
+  product: any;
+}
+
+export default function ProductClient({ product }: Props) {
   const router = useRouter();
   const addItem = useCartStore((state) => state.addItem);
-  const cartItems = useCartStore((state) => state.items);
+  
+  // --- IMAGES STATE ---
+  // Combine main image + gallery into one list
+  const allImages = [product.mainImage, ...(product.gallery || [])].filter(Boolean);
+  const [selectedImage, setSelectedImage] = useState(allImages[0]);
 
-  const [buying, setBuying] = useState(false);
+  // --- BUNDLE STATE ---
+  const [selectedBundle, setSelectedBundle] = useState(
+    product.bundleOptions?.[0] || { 
+      title: "Single Pack", 
+      count: 1, 
+      price: product.price, 
+      tag: "Standard" 
+    }
+  );
+  
+  const [qty, setQty] = useState(1);
+  const [isBuying, setIsBuying] = useState(false);
+  const [isNutritionOpen, setIsNutritionOpen] = useState(false);
 
-  // --- 1. STOCK CALCULATION ---
+  // --- STOCK LOGIC ---
   const openingStock = product?.openingStock ?? 0;
   const stockOut = product?.stockOut ?? 0;
-  const availableStock = openingStock - stockOut; // Calculate real stock
-  
+  const availableStock = openingStock - stockOut;
   const isOutOfStock = availableStock <= 0;
-  const images = product?.images ?? [];
-  const itemKey = product._id; 
+  const maxQty = selectedBundle.count > 0 ? Math.floor(availableStock / selectedBundle.count) : 0;
 
-  const handleBuyNow = async () => {
-    if (buying) return;
-    if (isOutOfStock) {
-      toast.error("This product is out of stock");
-      return;
-    }
-    setBuying(true);
+  useEffect(() => {
+    setQty(1);
+  }, [selectedBundle]);
 
-    try {
-      const existsInCart = cartItems.find((item) => item.itemKey === itemKey);
-      
-      if (!existsInCart) {
-        // Pass the calculated stock to the store if needed
-        addItem({ ...product, stock: availableStock }); 
-      }
-
-      sendGAEvent("add_to_cart", {
-        currency: "LKR",
-        value: product.price,
-        items: [{ item_id: product._id, item_name: product.name, price: product.price, quantity: 1 }],
-      });
-
-      setTimeout(() => {
-        router.push("/cart");
-      }, 100);
-    } finally {
-      // Stay loading until nav
-    }
+  // --- ACTIONS ---
+  const handleAddToCart = () => {
+    if (isOutOfStock) return;
+    addItem(product, qty, selectedBundle);
   };
 
-  // ... (Keep your useEffects for global info and GA4 tracking here) ...
+  const handleBuyNow = () => {
+    if (isOutOfStock) return;
+    setIsBuying(true);
+    addItem(product, qty, selectedBundle);
+    setTimeout(() => router.push("/cart"), 500);
+  };
 
   return (
     <>
-      {buying && <Loading />}
-      <div className="bg-tech_white py-12">
-        <Container>
-          <div className="flex flex-col md:flex-row gap-10">
+      {isBuying && <Loading />}
+      
+      <div className="bg-cream min-h-screen py-12 sm:py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
+
+          {/* --- LEFT: GALLERY & MAIN IMAGE --- */}
+          <div className="sticky top-24 flex flex-col-reverse sm:flex-row gap-4 h-auto sm:h-[600px]">
+             
+             {/* 1. Vertical Thumbnails (Hidden on tiny screens, shown below on mobile) */}
+             {allImages.length > 1 && (
+               <div className="flex sm:flex-col gap-3 overflow-x-auto sm:overflow-y-auto sm:w-24 scrollbar-hide py-2 sm:py-0">
+                 {allImages.map((img: any, i: number) => (
+                   <button
+                     key={i}
+                     onClick={() => setSelectedImage(img)}
+                     className={`relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 transition-all overflow-hidden ${
+                       selectedImage === img 
+                         ? "border-brandRed opacity-100 ring-2 ring-brandRed/20" 
+                         : "border-charcoal/10 opacity-60 hover:opacity-100 hover:border-charcoal/30"
+                     }`}
+                   >
+                     <Image 
+                       src={urlFor(img).url()} 
+                       alt={`View ${i}`} 
+                       fill 
+                       className="object-cover"
+                     />
+                   </button>
+                 ))}
+               </div>
+             )}
+
+             {/* 2. Main Large Image */}
+             <div className="flex-1 bg-[#F3EFE0] rounded-[3rem] p-8 border border-charcoal/5 relative overflow-hidden group h-[400px] sm:h-full flex items-center justify-center">
+                <div className="absolute inset-0 border-[3px] border-charcoal/5 rounded-[2.5rem] m-4 pointer-events-none"></div>
+                
+                {/* Badge */}
+                {product.badge && (
+                  <div className="absolute top-8 left-8 bg-brandRed text-cream font-sans font-bold text-xs uppercase tracking-widest px-3 py-1.5 rounded-full z-10 shadow-sm">
+                    {product.badge}
+                  </div>
+                )}
+                
+                <div className="relative w-full h-full p-4">
+                  <AnimatePresence mode="wait">
+                    {selectedImage && (
+                      <motion.div
+                        key={selectedImage._key || selectedImage.asset?._ref} // Unique key triggers animation
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="relative w-full h-full"
+                      >
+                        <Image
+                          src={urlFor(selectedImage).url()}
+                          alt={product.name}
+                          fill
+                          className="object-contain drop-shadow-2xl"
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+             </div>
+          </div>
+
+          {/* --- RIGHT: CONTENT --- */}
+          <div className="flex flex-col gap-8">
             
-            {/* Image View */}
-            {images.length > 0 && (
-              <ImageView
-                images={images}
-                isStock={availableStock} // Pass calculated stock
-                isPreOrder={false} 
-              />
+            {/* Header */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex text-brandRed">
+                  {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
+                </div>
+                <span className="text-xs font-bold font-sans text-charcoal/60 tracking-wider uppercase">48 Reviews</span>
+              </div>
+              
+              <h1 className="font-serif text-5xl sm:text-6xl font-black text-charcoal mb-2 leading-[0.9]">
+                {product.name}
+              </h1>
+              
+              {product.subtitle && (
+                <p className="font-serif italic text-2xl text-charcoal/60 font-light mb-6">
+                  {product.subtitle}
+                </p>
+              )}
+
+              <p className="font-sans text-charcoal/70 text-base sm:text-lg leading-relaxed border-l-2 border-brandRed pl-6">
+                {product.description}
+              </p>
+            </div>
+
+            {/* Benefits */}
+            {product.benefits && (
+              <div className="flex flex-wrap gap-4 sm:gap-6 py-6 border-y border-charcoal/10">
+                {product.benefits.map((benefit: string, i: number) => (
+                  <div key={i} className="flex items-center gap-2 opacity-80">
+                    <ShieldCheck className="w-4 h-4 text-brandRed" />
+                    <span className="font-sans text-xs font-bold text-charcoal uppercase tracking-wider">{benefit}</span>
+                  </div>
+                ))}
+              </div>
             )}
 
-            {/* Info */}
-            <div className="w-full md:w-3/5 flex flex-col gap-5">
-              <div className="space-y-2">
-                <p
-                  className={`w-24 text-center text-xs py-1 font-semibold rounded-lg ${
-                    !isOutOfStock
-                      ? "bg-green-100 text-green-600"
-                      : "bg-red-100 text-red-600"
-                  }`}
-                >
-                  {!isOutOfStock ? "In Stock" : "Out of Stock"}
-                </p>
-                <h1 className="text-3xl font-bold">{product?.name}</h1>
+            {/* Bundle Selector */}
+            <div>
+              <div className="flex justify-between items-baseline mb-4">
+                 <label className="font-sans text-xs font-bold uppercase tracking-widest text-charcoal/40">Select Bundle</label>
+                 {isOutOfStock && <span className="text-red-500 font-bold text-sm">Out of Stock</span>}
               </div>
 
-              <PriceView price={product?.price} discount={0} className="text-xl font-bold" />
-
-              <div className="text-sm text-gray-600 space-y-1">
-                {product?.sku && <p>SKU: {product.sku}</p>}
-                <p>Delivery Time: 3-5 Working Days</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {product.bundleOptions?.map((bundle: any, i: number) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedBundle(bundle)}
+                    disabled={isOutOfStock}
+                    className={`relative p-4 rounded-xl border-2 text-left transition-all duration-200 ${
+                      selectedBundle.title === bundle.title
+                        ? "border-brandRed bg-brandRed/5 shadow-[4px_4px_0px_0px_#D64545]"
+                        : "border-charcoal/10 bg-white hover:border-charcoal/30"
+                    } ${isOutOfStock ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                    {bundle.savings && (
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-charcoal text-white text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+                        {bundle.savings}
+                      </span>
+                    )}
+                    <div className="font-serif font-bold text-charcoal text-lg">{bundle.count} Pack</div>
+                    <div className="font-sans text-sm text-charcoal/60">Rs. {bundle.price}</div>
+                  </button>
+                ))}
               </div>
+            </div>
 
-              <div className="flex items-center gap-3 w-full sm:w-1/2 mt-4">
-                <AddToCartButton
-                  key={itemKey}
-                  product={product}
-                  // Pass calculated stock to button so it knows when to disable
-                  variant={{ availableStock: availableStock }} 
-                />
-                
-                <button
-                  onClick={handleBuyNow}
-                  disabled={buying || isOutOfStock}
-                  className={`w-36 text-white py-2 transition rounded font-semibold
-                    ${buying || isOutOfStock ? "bg-gray-400 cursor-not-allowed" : "bg-gray-800 hover:bg-black"}`}
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row items-stretch gap-4">
+              <div className="flex items-center justify-between sm:justify-center gap-4 bg-white px-6 py-4 rounded-full border border-charcoal/10">
+                <button 
+                  onClick={() => setQty(q => Math.max(1, q - 1))} 
+                  disabled={isOutOfStock || qty <= 1}
+                  className="p-1 hover:bg-black/5 rounded-full transition-colors disabled:opacity-30"
                 >
-                  {buying ? "Processing..." : "BUY NOW"}
+                  <Minus className="w-4 h-4 text-charcoal" />
+                </button>
+                <span className="font-serif font-bold text-xl text-charcoal w-6 text-center">{qty}</span>
+                <button 
+                  onClick={() => {
+                     if (qty < maxQty) setQty(q => q + 1);
+                     else toast.error(`Only ${maxQty} packs available!`);
+                  }} 
+                  disabled={isOutOfStock || qty >= maxQty}
+                  className="p-1 hover:bg-black/5 rounded-full transition-colors disabled:opacity-30"
+                >
+                  <Plus className="w-4 h-4 text-charcoal" />
                 </button>
               </div>
 
-              {product?.description && (
-                <div className="border-t border-gray-300 pt-6 mt-4">
-                  <h3 className="text-lg font-semibold mb-2">Description</h3>
-                  <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
-                    {product.description}
-                  </p>
-                </div>
-              )}
+              <button 
+                onClick={handleAddToCart}
+                disabled={isOutOfStock}
+                className={`flex-1 font-serif font-bold text-xl px-8 py-4 rounded-full border-2 border-charcoal shadow-[4px_4px_0px_0px_#4A3728] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_#4A3728] transition-all flex items-center justify-center gap-3
+                  ${isOutOfStock ? "bg-gray-300 text-gray-500 cursor-not-allowed border-gray-400 shadow-none" : "bg-brandRed text-cream"}
+                `}
+              >
+                {isOutOfStock ? "Sold Out" : "Add to Cart"}
+                {!isOutOfStock && (
+                  <span className="bg-black/20 px-2 py-0.5 rounded text-base">
+                    Rs. {(selectedBundle.price * qty).toLocaleString()}
+                  </span>
+                )}
+              </button>
             </div>
+
+            {/* Nutrition Accordion */}
+            {product.nutrition && (
+              <div className="border border-charcoal/10 rounded-2xl overflow-hidden mt-4 bg-white">
+                <button 
+                  onClick={() => setIsNutritionOpen(!isNutritionOpen)}
+                  className="w-full flex items-center justify-between p-4 bg-[#F9F7F2] hover:bg-[#F3EFE0] transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-charcoal/5 flex items-center justify-center">
+                      <Leaf className="w-4 h-4 text-charcoal/60" />
+                    </div>
+                    <span className="font-serif font-bold text-charcoal">Nutrition Facts</span>
+                  </div>
+                  <ChevronDown className={`w-5 h-5 text-charcoal transition-transform ${isNutritionOpen ? "rotate-180" : ""}`} />
+                </button>
+                <AnimatePresence>
+                  {isNutritionOpen && (
+                    <motion.div
+                      initial={{ height: 0 }}
+                      animate={{ height: "auto" }}
+                      exit={{ height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="p-6 text-sm font-sans text-charcoal/80 space-y-2 border-t border-charcoal/5">
+                        <div className="flex justify-between border-b border-dashed border-charcoal/20 pb-2">
+                          <span>Serving Size</span>
+                          <span className="font-bold">{product.nutrition.servingSize}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-dashed border-charcoal/20 pb-2">
+                          <span>Calories</span>
+                          <span className="font-bold">{product.nutrition.calories}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-dashed border-charcoal/20 pb-2">
+                          <span>Natural Sugar</span>
+                          <span className="font-bold">{product.nutrition.sugar}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Added Sugar</span>
+                          <span className="font-bold text-brandRed">&lt; 1g (3%)</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
           </div>
-        </Container>
+        </div>
       </div>
     </>
   );

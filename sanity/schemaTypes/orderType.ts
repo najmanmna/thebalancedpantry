@@ -6,129 +6,150 @@ export const orderType = defineType({
   title: "Orders",
   type: "document",
   icon: BasketIcon,
+  groups: [
+    { name: "details", title: "Order Details" },
+    { name: "customer", title: "Customer Info" },
+    { name: "admin", title: "Admin & Status" },
+  ],
   fields: [
-    // 🔹 Order basics
+    // 🔹 1. Order Basics
     defineField({
       name: "orderNumber",
       title: "Order Number",
       type: "string",
+      group: "details",
       validation: (Rule) => Rule.required(),
-    }),
-    defineField({
-      name: "status",
-      title: "Order Status",
-      type: "string",
-      options: {
-        list: [
-          { title: "Pending", value: "pending" },
-          { title: "Processing", value: "processing" },
-          { title: "Shipped", value: "shipped" },
-          { title: "Delivered", value: "delivered" },
-          { title: "Cancelled", value: "cancelled" },
-        ],
-      },
-      initialValue: "pending",
-      readOnly: ({ parent }) => parent?.status === "cancelled",
+      readOnly: true,
     }),
     defineField({
       name: "orderDate",
       title: "Order Date",
       type: "datetime",
+      group: "details",
       initialValue: () => new Date().toISOString(),
       validation: (Rule) => Rule.required(),
+      readOnly: true,
     }),
 
-    // 🔹 Customer details
+    // 🔹 2. Status Management
+    defineField({
+      name: "status",
+      title: "Customer Status",
+      type: "string",
+      group: "admin",
+      options: {
+        list: [
+          { title: "Pending Payment", value: "pending" },
+          { title: "Processing", value: "processing" },
+          { title: "Shipped", value: "shipped" },
+          { title: "Delivered", value: "delivered" },
+          { title: "Cancelled", value: "cancelled" },
+        ],
+        layout: "radio", // Easier to click
+      },
+      initialValue: "pending",
+    }),
+    // Internal note for your team (not seen by customer)
+    defineField({
+      name: "internalNote",
+      title: "Internal Notes",
+      type: "text",
+      group: "admin",
+      rows: 3,
+      description: "Notes for the packing team (e.g. 'Pack with extra care').",
+    }),
+
+    // 🔹 3. Customer Details
     defineField({
       name: "customerName",
       title: "Customer Name",
       type: "string",
+      group: "customer",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "phone",
       title: "Phone Number",
       type: "string",
+      group: "customer",
       validation: (Rule) => Rule.required(),
-    }),
-    defineField({
-      name: "alternativePhone",
-      title: "Alternative Phone Number",
-      type: "string",
-      description: "A second number to contact if the main one is unreachable.",
     }),
     defineField({
       name: "email",
       title: "Email",
       type: "string",
+      group: "customer",
     }),
-
-    // 🔹 Address
     defineField({
       name: "address",
       title: "Shipping Address",
       type: "object",
+      group: "customer",
       fields: [
-        defineField({ name: "district", title: "District", type: "string" }),
-        defineField({ name: "city", title: "City", type: "string" }),
-        defineField({ name: "line1", title: "Address Line", type: "string" }),
-        defineField({ name: "notes", title: "Notes", type: "text" }),
+        { name: "line1", title: "Address Line", type: "string" },
+        { name: "city", title: "City", type: "string" },
+        { name: "district", title: "District", type: "string" },
+        { name: "notes", title: "Delivery Instructions", type: "text" },
       ],
     }),
 
-    // 🔹 Payment
+    // 🔹 4. Cart & Payment
+    defineField({
+      name: "items",
+      title: "Cart Items",
+      type: "array",
+      group: "details",
+      of: [{ type: "orderItem" }], 
+    }),
     defineField({
       name: "paymentMethod",
       title: "Payment Method",
       type: "string",
+      group: "details",
       options: {
         list: [
           { title: "Cash on Delivery", value: "COD" },
           { title: "Bank Transfer", value: "BANK" },
         ],
       },
-      validation: (Rule) => Rule.required(),
     }),
 
-    // 🔹 Products
-    defineField({
-      name: "items",
-      title: "Ordered Items",
-      type: "array",
-      of: [{ type: "orderItem" }], // Referenced the updated orderItem schema
-    }),
-
-    // 🔹 Totals
+    // 🔹 5. Financials
     defineField({
       name: "subtotal",
       title: "Subtotal",
       type: "number",
-    }),
-    defineField({
-      name: "shippingCost",
-      title: "Shipping Cost",
-      type: "number",
+      group: "details",
+      readOnly: true,
     }),
     defineField({
       name: "discountAmount",
-      title: "Discount Amount",
+      title: "Discount Applied",
       type: "number",
-      description: "The amount discounted (if any)",
-      initialValue: 0,
-      validation: (Rule) => Rule.min(0),
+      group: "details",
+      readOnly: true,
     }),
     defineField({
       name: "discountLabel",
-      title: "Discount Label",
+      title: "Discount Code/Reason",
       type: "string",
-      description: "The label for the applied discount",
+      group: "details",
+      readOnly: true,
+    }),
+    defineField({
+      name: "shippingCost",
+      title: "Shipping Fee",
+      type: "number",
+      group: "details",
       readOnly: true,
     }),
     defineField({
       name: "total",
-      title: "Total",
+      title: "Grand Total",
       type: "number",
-      validation: (Rule) => Rule.required().min(0),
+      group: "details",
+      validation: (Rule) => Rule.required(),
+      readOnly: true,
     }),
   ],
 
@@ -138,15 +159,21 @@ export const orderType = defineType({
       total: "total",
       orderId: "orderNumber",
       status: "status",
-      // Snapshots from the first item in the array
-      productName: "items.0.productName",
-      productImage: "items.0.productImage",
+      date: "orderDate",
     },
-    prepare({ name, total, orderId, status, productImage }) {
+    prepare({ name, total, orderId, status, date }) {
+      const d = new Date(date).toLocaleDateString();
+      const statusEmojis: Record<string, string> = {
+        pending: "🟡",
+        processing: "⚙️",
+        shipped: "🚚",
+        delivered: "✅",
+        cancelled: "❌",
+      };
+
       return {
-        title: `${name} (${orderId || "No ID"})`,
-        subtitle: `Total: Rs. ${total} — ${status}`,
-        media: productImage,
+        title: `${statusEmojis[status] || "⚪️"} ${name} (Rs. ${total})`,
+        subtitle: `#${orderId} — ${d} — ${status.toUpperCase()}`,
       };
     },
   },
