@@ -44,11 +44,11 @@ const Header = () => {
 
         {/* --- CENTER SECTION: Logo --- */}
         <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-          <Link href="/" className="block">
+     
             <div className={`transition-transform duration-300 ${isScrolled ? "scale-90" : "scale-100"}`}>
                <LogoBlack />
             </div>
-          </Link>
+  
         </div>
 
         {/* --- RIGHT SECTION: Actions --- */}

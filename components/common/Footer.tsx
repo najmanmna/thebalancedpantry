@@ -35,7 +35,7 @@ export default function Footer() {
           <div className="md:col-span-2 md:col-start-6">
             <h4 className="font-serif font-bold text-lg mb-6">Shop</h4>
             <ul className="space-y-4 font-sans text-[#F3EFE0]/60 text-sm">
-              <li><Link href="#shop" className="hover:text-brandRed transition-colors">Strawberries</Link></li>
+              <li><Link href="/shop" className="hover:text-brandRed transition-colors">Strawberries</Link></li>
               <li><Link href="#" className="hover:text-brandRed transition-colors">Durian (Coming Soon)</Link></li>
               {/* <li><Link href="#" className="hover:text-brandRed transition-colors">Mixed Pack</Link></li>
               <li><Link href="#" className="hover:text-brandRed transition-colors">Gift Bundles</Link></li> */}
@@ -46,7 +46,7 @@ export default function Footer() {
           <div className="md:col-span-2">
             <h4 className="font-serif font-bold text-lg mb-6">Company</h4>
             <ul className="space-y-4 font-sans text-[#F3EFE0]/60 text-sm">
-              <li><Link href="/our-story" className="hover:text-brandRed transition-colors">The Science</Link></li>
+              <li><Link href="/science" className="hover:text-brandRed transition-colors">The Science</Link></li>
               {/* <li><Link href="/track-order" className="hover:text-brandRed transition-colors">Track Order</Link></li> */}
               {/* <li><Link href="#" className="hover:text-brandRed transition-colors">Wholesale</Link></li> */}
               <li><Link href="#" className="hover:text-brandRed transition-colors">Contact Us</Link></li>
@@ -56,9 +56,9 @@ export default function Footer() {
           {/* Column 4: Newsletter (Span 3) */}
           <div className="md:col-span-3">
             <h4 className="font-serif font-bold text-lg mb-4">Stay Crunchy</h4>
-            <p className="font-sans text-[#F3EFE0]/60 text-xs mb-4">
+            {/* <p className="font-sans text-[#F3EFE0]/60 text-xs mb-4">
               Get 10% off your first order and secret flavor drops.
-            </p>
+            </p> */}
             <div className="flex gap-2">
               <input 
                 type="email" 

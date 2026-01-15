@@ -1,16 +1,22 @@
+import { sanityFetch } from "@/sanity/lib/live"; 
+import { PRODUCT_BY_SLUG_QUERY } from "@/sanity/queries/query"; // 👈 Import the query
 import { notFound } from "next/navigation";
-import { getProductBySlug } from "@/sanity/queries";
 import ProductClient from "./ProductClient";
 
-export const runtime = 'edge';
-export const revalidate = 60;
+export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
 
-export default async function ProductPage(props: { params: Promise<{ slug: string }> }) {
-  const { slug } = await props.params; // ✅ await params
-  const product = await getProductBySlug(slug);
+  // 🔹 Use the imported query
+  const { data: product } = await sanityFetch({
+    query: PRODUCT_BY_SLUG_QUERY,
+    params: { slug },
+  });
 
-  if (!product) return notFound();
+  if (!product) {
+    return notFound();
+  }
 
-  return <ProductClient product={product} />;
+  return (
+    <ProductClient product={product} />
+  );
 }
-
