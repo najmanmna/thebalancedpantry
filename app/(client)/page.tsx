@@ -1,7 +1,7 @@
 import { client } from "@/sanity/lib/client";
 import { groq } from "next-sanity";
 import BrandHero from "@/components/BrandHero";
-import Hero from "@/components/Hero"; // Assuming this is your "StrawberrySpotlight" section
+import Hero from "@/components/Hero"; 
 import ProductShowcase from "@/components/ProductShowcase";
 import PantryGrid from "@/components/PantryGrid";
 import FAQSection from "@/components/FAQSection";
@@ -14,52 +14,87 @@ async function getHeroProduct() {
        _id,
        name,
        slug,
+       sku,
        subtitle,
        badge,
        description,
        price,
+       
+       // Inventory Logic
        openingStock,
        stockOut,
-       mainImage,
-       bundleOptions,
-       benefits,
-       nutrition,
-       // 👇 Fetch categories to check the type
+       "availableStock": coalesce(openingStock, 0) - coalesce(stockOut, 0),
+       
+       // Imagery
+       mainImage {
+         asset
+       },
+       gallery[] {
+         _key,
+         asset
+       },
+
+       // Business Logic (Bundles)
+       bundleOptions[] {
+         title,
+         count,
+         price,
+         savings,
+         tag
+       },
+
+       // Storytelling & Trust
+       benefits, 
+
+       // Health Data
+       nutrition {
+         servingSize,
+         calories,
+         sugar,
+         protein,
+         fat
+       },
+
        categories[]->{
-         "slug": slug.current
+         _id,
+         title,
+         slug
        }
     }
   `);
 }
-export const revalidate = 60; // Revalidate every 60 seconds
 
+export const revalidate = 60; 
 
 export default async function Home() {
   // 2. Fetch the Data
   const heroProduct = await getHeroProduct();
 
+  // 🔹 FIX: Safely check the slug string inside the object
+  // Sanity slugs are objects: { current: "freeze-dried", ... }
   const isFreezeDried = heroProduct?.categories?.some((c: any) => 
-    c.slug.includes("freeze")
+    c.slug?.current?.includes("freeze")
   );
-
 
   return (
     <div className="bg-cream pb-16 overflow-x-hidden">
       
-      {/* 1. Brand Manifesto: "We are a curated pantry" */}
+      {/* 1. Brand Manifesto */}
       <BrandHero />
 
-      {/* 2. The Hook: "The Nostalgia of Fresh Fruit" */}
-{heroProduct && <Hero product={heroProduct} />}
-{isFreezeDried && <UsageSection />}
-      {/* 3. The Close: Buy the Strawberries (Dynamic Data) */}
-      {/* We only render this if the product is found to prevent errors */}
+      {/* 2. The Hook */}
+      {heroProduct && <Hero product={heroProduct} />}
+      
+      {/* 3. Usage Section (Conditional) */}
+      {isFreezeDried && <UsageSection />}
+
+      {/* 4. The Close */}
       {heroProduct && <ProductShowcase product={heroProduct} />}
 
-      {/* 4. The Shelf: "Shop other items" */}
+      {/* 5. The Shelf */}
       <PantryGrid />
 
-      {/* 5. Reassurance */}
+      {/* 6. Reassurance (Uncomment when ready) */}
       {/* <FAQSection /> */}
 
     </div>
