@@ -38,7 +38,7 @@ export default defineConfig({
     ordersSummaryTool(),
     stockReportTool(),
     // Vision is for querying with GROQ from inside the Studio
-    visionTool({defaultApiVersion: apiVersion}),
+    // visionTool({defaultApiVersion: apiVersion}),
   ],
 
   // 👇 This must be OUTSIDE the plugins array

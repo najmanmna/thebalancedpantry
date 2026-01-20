@@ -1,10 +1,11 @@
+import "./globals.css";
+
 import React from "react";
 import type { Metadata } from "next";
 import { Fraunces, Quicksand } from "next/font/google"; // Updated Fonts
 import { SanityLive } from "@/sanity/lib/live";
 import { Toaster } from "react-hot-toast";
 import WhatsAppButton from "@/components/WhatsAppButton";
-import "./globals.css";
 
 // 1. SETUP RETRO SERIF FONT (Headings)
 const fraunces = Fraunces({
