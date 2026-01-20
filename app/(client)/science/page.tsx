@@ -72,17 +72,20 @@ function HeroSection() {
 // ------------------------------------------------------------------
 // 2. THE INTERACTIVE PROCESS (SCROLLYTELLING)
 // ------------------------------------------------------------------
-const STEPS = [
+
+  const STEPS = [
   {
     id: "fresh",
     title: "1. The Harvest",
-    desc: "We pick the fruit at peak ripeness. This is the only time the fruit has full flavor and maximum nutrients.",
+    // Changed "We pick" to "Fruit is harvested"
+    desc: "Fruit is harvested at peak ripeness. This is the precise moment it holds full flavor and maximum nutrient density.",
     icon: Sun,
     color: "bg-orange-100 text-orange-600",
   },
   {
     id: "frozen",
     title: "2. Flash Freezing",
+    // Already passive, kept as is.
     desc: "The fruit is instantly frozen to -40°C. This locks the cellular structure in place, trapping vitamins and enzymes.",
     icon: Snowflake,
     color: "bg-blue-100 text-blue-600",
@@ -90,28 +93,31 @@ const STEPS = [
   {
     id: "vacuum",
     title: "3. The Vacuum Chamber",
-    desc: "We lower the pressure to create a vacuum. This is where physics gets weird.",
+    // Changed "We lower" to "Pressure is lowered"
+    desc: "Pressure is lowered to create a deep vacuum environment. This is where the physics gets weird.",
     icon: Wind,
     color: "bg-purple-100 text-purple-600",
   },
   {
     id: "sublimation",
     title: "4. Sublimation",
-    desc: "Ice turns DIRECTLY into vapor, skipping the liquid phase. The water leaves, but the flavor and structure stay.",
+    // Physics description, kept as is.
+    desc: "Ice turns DIRECTLY into vapor, skipping the liquid phase entirely. The water leaves, but the flavor and structure stay.",
     icon: Zap,
     color: "bg-yellow-100 text-yellow-600",
   },
   {
     id: "crunch",
     title: "5. The Crunch",
+    // Result description, kept as is.
     desc: "What's left? A lightweight, airy, intensely flavorful fruit with 98% of its nutrients intact.",
-    icon: Leaf, // Imported from Lucide
+    icon: Leaf, 
     color: "bg-brandRed/10 text-brandRed",
   }
 ];
 
-// Replace the previous ProcessScrollyTelling component with this one
-// Replace the previous ProcessScrollyTelling component with this one
+
+
 function ProcessScrollyTelling() {
   const [activeStep, setActiveStep] = useState(0);
 
@@ -207,8 +213,6 @@ function StepCard({ step, index, onInView, isMobile }: any) {
          <div className="mt-4 p-4 bg-white rounded-xl border border-charcoal/5">
             <span className="text-xs font-bold uppercase text-charcoal/40 mb-2 block">Process Diagram</span>
              
-
-
 
          </div>
       )}
@@ -413,44 +417,53 @@ function NutrientRetention() {
        <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="font-serif text-4xl font-bold text-charcoal mb-12">Vitamin C Retention</h2>
           
-          <div className="w-full h-64 flex items-end justify-center gap-8 md:gap-16">
-             {/* Fresh */}
-             <div className="w-24 flex flex-col items-center gap-4 group">
-                <span className="font-bold text-charcoal">100%</span>
-                <motion.div 
-                   initial={{ height: 0 }} whileInView={{ height: "100%" }} transition={{ duration: 1 }}
-                   className="w-full bg-green-500 rounded-t-xl relative group-hover:bg-green-400 transition-colors"
-                ></motion.div>
-                <span className="font-sans font-bold text-charcoal">Fresh</span>
-             </div>
+          {/* Increased height (h-80) to give the badge room to float without pushing alignment */}
+          <div className="w-full h-80 flex items-end justify-center gap-12 md:gap-24 pb-4">
 
-             {/* Freeze Dried */}
-             <div className="w-24 h-full flex flex-col items-center gap-4">
-                <span className="font-bold text-brandRed">98%</span>
+             {/* Freeze Dried (98%) - The Winner */}
+             <div className="w-32 h-full flex flex-col justify-end items-center relative z-10">
+                {/* Badge */}
                 <motion.div 
-                   initial={{ height: 0 }} whileInView={{ height: "98%" }} transition={{ duration: 1, delay: 0.2 }}
-                   className="w-full h-[98%] bg-brandRed rounded-t-xl relative shadow-lg"
+                   initial={{ opacity: 0, y: 10 }}
+                   whileInView={{ opacity: 1, y: 0 }}
+                   transition={{ delay: 0.8 }}
+                   className="mb-3 bg-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg text-brandRed border border-brandRed/10 whitespace-nowrap"
                 >
-                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-white px-3 py-1 rounded-full text-xs font-bold shadow text-brandRed whitespace-nowrap">
-                       Balanced Pantry
-                    </div>
+                   Balanced Pantry
                 </motion.div>
-                <span className="font-sans font-bold text-brandRed">Freeze Dried</span>
+                
+                <span className="font-bold text-brandRed text-3xl mb-2">98%</span>
+                
+                <motion.div 
+                   initial={{ height: 0 }} 
+                   whileInView={{ height: "80%" }} 
+                   transition={{ duration: 1 }}
+                   className="w-full bg-brandRed rounded-t-2xl relative shadow-[0_20px_50px_-12px_rgba(214,69,69,0.3)]"
+                >
+                    {/* Shine effect */}
+                    <div className="absolute top-0 right-0 w-1/2 h-full bg-white/10 rounded-tr-2xl"></div>
+                </motion.div>
+                <span className="font-sans font-bold text-brandRed mt-4 text-lg">Freeze Dried</span>
              </div>
 
-             {/* Dehydrated */}
-             <div className="w-24 h-full flex flex-col items-center gap-4 opacity-50">
-                <span className="font-bold text-charcoal">60%</span>
+             {/* Dehydrated (60%) */}
+             <div className="w-32 h-full flex flex-col justify-end items-center opacity-40">
+                <span className="font-bold text-charcoal text-3xl mb-2">60%</span>
+                
+                {/* Adjusted height to be visually proportional to 98% (approx 60% relative height) */}
                 <motion.div 
-                   initial={{ height: 0 }} whileInView={{ height: "60%" }} transition={{ duration: 1, delay: 0.4 }}
-                   className="w-full h-[60%] bg-charcoal rounded-t-xl"
+                   initial={{ height: 0 }} 
+                   whileInView={{ height: "48%" }} 
+                   transition={{ duration: 1, delay: 0.2 }}
+                   className="w-full bg-charcoal rounded-t-2xl"
                 ></motion.div>
-                <span className="font-sans font-bold text-charcoal">Dehydrated</span>
+                <span className="font-sans font-bold text-charcoal mt-4 text-lg">Dehydrated</span>
              </div>
+
           </div>
 
-          <p className="mt-12 text-charcoal/70 max-w-lg mx-auto">
-             Because we don't use heat, heat-sensitive vitamins (like Vitamin C and A) aren't destroyed. You get the nutritional equivalent of fresh fruit, just without the water weight.
+          <p className="mt-12 text-charcoal/70 max-w-lg mx-auto leading-relaxed">
+             Since high heat is never used, sensitive vitamins (like Vitamin C and A) remain intact. It provides the nutritional equivalent of fresh fruit, simply without the water weight.
           </p>
        </div>
     </section>

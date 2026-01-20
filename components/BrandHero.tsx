@@ -107,7 +107,7 @@ export default function BrandHero() {
         >
           We curate products that support a 
           <strong className="text-charcoal font-bold"> healthier way of eating</strong>. 
-          No fillers, no fake stuff—just honest ingredients.
+          Low Calorie and Wholesome Products that support better eating.
         </motion.p>
 
         {/* Scroll Indicator */}

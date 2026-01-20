@@ -6,6 +6,7 @@ import ProductShowcase from "@/components/ProductShowcase";
 import PantryGrid from "@/components/PantryGrid";
 import FAQSection from "@/components/FAQSection";
 import UsageSection from "@/components/UsageSection";
+import ScienceCTA from "@/components/ScienceCTA"; // 👈 Import the new component
 
 // 1. Define the Fetch Function
 async function getHeroProduct() {
@@ -19,47 +20,15 @@ async function getHeroProduct() {
        badge,
        description,
        price,
-       
-       // Inventory Logic
        openingStock,
        stockOut,
        "availableStock": coalesce(openingStock, 0) - coalesce(stockOut, 0),
-       
-       // Imagery
-       mainImage {
-         asset
-       },
-       gallery[] {
-         _key,
-         asset
-       },
-
-       // Business Logic (Bundles)
-       bundleOptions[] {
-         title,
-         count,
-         price,
-         savings,
-         tag
-       },
-
-       // Storytelling & Trust
+       mainImage { asset },
+       gallery[] { _key, asset },
+       bundleOptions[] { title, count, price, savings, tag },
        benefits, 
-
-       // Health Data
-       nutrition {
-         servingSize,
-         calories,
-         sugar,
-         protein,
-         fat
-       },
-
-       categories[]->{
-         _id,
-         title,
-         slug
-       }
+       nutrition { servingSize, calories, sugar, protein, fat },
+       categories[]->{ _id, title, slug }
     }
   `);
 }
@@ -67,11 +36,9 @@ async function getHeroProduct() {
 export const revalidate = 60; 
 
 export default async function Home() {
-  // 2. Fetch the Data
   const heroProduct = await getHeroProduct();
 
-  // 🔹 FIX: Safely check the slug string inside the object
-  // Sanity slugs are objects: { current: "freeze-dried", ... }
+  // Safely check for "freeze" in category slug
   const isFreezeDried = heroProduct?.categories?.some((c: any) => 
     c.slug?.current?.includes("freeze")
   );
@@ -79,22 +46,22 @@ export default async function Home() {
   return (
     <div className="bg-cream pb-16 overflow-x-hidden">
       
-      {/* 1. Brand Manifesto */}
       <BrandHero />
 
-      {/* 2. The Hook */}
       {heroProduct && <Hero product={heroProduct} />}
       
-      {/* 3. Usage Section (Conditional) */}
-      {isFreezeDried && <UsageSection />}
+      {/* 3. Conditional Sections for Freeze Dried Items */}
+      {isFreezeDried && (
+        <>
+          <UsageSection />
+          <ScienceCTA /> {/* 👈 Added here: breaks up the flow nicely before the showcase */}
+        </>
+      )}
 
-      {/* 4. The Close */}
       {heroProduct && <ProductShowcase product={heroProduct} />}
 
-      {/* 5. The Shelf */}
       <PantryGrid />
 
-      {/* 6. Reassurance (Uncomment when ready) */}
       {/* <FAQSection /> */}
 
     </div>

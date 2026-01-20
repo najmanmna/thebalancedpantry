@@ -16,8 +16,8 @@ import {schema} from './sanity/schemaTypes'
 import { structure, defaultDocumentNode } from './sanity/studioStructure'
 
 // 👇 Custom Tools (Tabs)
-// import { ordersSummaryTool } from './sanity/views/ordersSummaryTool'
-// import { stockReportTool } from './sanity/views/stockReportTool'
+import { ordersSummaryTool } from './sanity/views/ordersSummaryTool'
+import { stockReportTool } from './sanity/views/stockReportTool'
 
 // 👇 Custom Actions (Publish Button Logic)
 import { useOrderActions } from './sanity/orderActions'
@@ -35,8 +35,8 @@ export default defineConfig({
       structure,
       defaultDocumentNode, 
     }),
-    // ordersSummaryTool(),
-    // stockReportTool(),
+    ordersSummaryTool(),
+    stockReportTool(),
     // Vision is for querying with GROQ from inside the Studio
     visionTool({defaultApiVersion: apiVersion}),
   ],

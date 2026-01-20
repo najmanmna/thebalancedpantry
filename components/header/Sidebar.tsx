@@ -1,12 +1,12 @@
 "use client";
 
 import { X, ChevronRight, Instagram, Facebook, Mail } from "lucide-react";
-import React from "react";
+import React, { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useOutsideClick } from "@/hooks"; // Assuming this hook exists in your project
-import LogoBlack from "../LogoBlack"; // Using the Dark logo for the Cream background
+import { useOutsideClick } from "@/hooks"; 
+import LogoBlack from "../LogoBlack"; 
 import { Category } from "@/sanity.types";
 
 interface SidebarProps {
@@ -17,8 +17,19 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, categories }) => {
   const pathname = usePathname();
-  // We use the hook to detect clicks outside the sidebar panel
   const sidebarRef = useOutsideClick<HTMLDivElement>(onClose);
+
+  // Prevent background scrolling when sidebar is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [isOpen]);
 
   // --- Animation Variants ---
   const backdropVariants = {
@@ -47,27 +58,29 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, categories }) => {
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* 1. BACKDROP (Dark overlay) */}
+          {/* 1. BACKDROP */}
+          {/* Fixed z-index to be higher than Header (z-50) */}
           <motion.div
             initial="closed"
             animate="open"
             exit="closed"
             variants={backdropVariants}
             onClick={onClose}
-            className="fixed inset-0 z-40 bg-charcoal/20 backdrop-blur-sm"
+            className="fixed inset-0 z-[60] bg-charcoal/20 backdrop-blur-sm"
           />
 
           {/* 2. SIDEBAR PANEL */}
+          {/* Added h-[100dvh] for mobile browser address bar support */}
           <motion.div
             ref={sidebarRef}
             initial="closed"
             animate="open"
             exit="closed"
             variants={panelVariants}
-            className="fixed inset-y-0 left-0 z-50 w-[85vw] sm:w-[350px] bg-cream border-r border-charcoal/10 shadow-2xl flex flex-col h-full"
+            className="fixed inset-y-0 left-0 z-[70] w-[85vw] sm:w-[350px] bg-cream border-r border-charcoal/10 shadow-2xl flex flex-col h-[100dvh]"
           >
             {/* --- HEADER --- */}
-            <div className="flex items-center justify-between p-6 border-b border-charcoal/5">
+            <div className="flex items-center justify-between p-6 border-b border-charcoal/5 flex-shrink-0">
               <div className="scale-90 origin-left">
                  <LogoBlack />
               </div>
@@ -82,7 +95,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, categories }) => {
             {/* --- SCROLLABLE CONTENT --- */}
             <div className="flex-1 overflow-y-auto py-8 px-6 flex flex-col gap-10">
               
-              {/* SECTION A: SHOP (Dynamic Categories) */}
+              {/* SECTION A: SHOP */}
               <div>
                 <h3 className="font-sans text-xs font-bold uppercase tracking-widest text-charcoal/40 mb-4">
                   Shop
@@ -107,7 +120,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, categories }) => {
                           }`}
                         >
                           {cat.title}
-                          {/* Animated Arrow on Hover */}
                           <ChevronRight className="w-5 h-5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 text-brandRed" />
                         </Link>
                       </motion.div>
@@ -118,18 +130,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, categories }) => {
                 </div>
               </div>
 
-              {/* SECTION B: DISCOVER (Static Links) */}
+              {/* SECTION B: DISCOVER (Updated) */}
               <div>
                 <h3 className="font-sans text-xs font-bold uppercase tracking-widest text-charcoal/40 mb-4">
                   Discover
                 </h3>
                 <div className="flex flex-col gap-4 font-sans font-semibold text-lg text-charcoal/80">
-                  <Link href="/our-story" onClick={onClose} className="hover:text-brandRed transition-colors">
-                    Our Story
-                  </Link>
-                 
-                  <Link href="/faq" onClick={onClose} className="hover:text-brandRed transition-colors">
-                    FAQ
+                  {/* Updated Link */}
+                  <Link href="/contact" onClick={onClose} className="hover:text-brandRed transition-colors">
+                    Contact Us
                   </Link>
                 </div>
               </div>
@@ -137,7 +146,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, categories }) => {
             </div>
 
             {/* --- FOOTER --- */}
-            <div className="p-6 border-t border-charcoal/5 bg-charcoal/5">
+            <div className="p-6 border-t border-charcoal/5 bg-charcoal/5 flex-shrink-0">
               <div className="flex gap-4 mb-4">
                 <SocialIcon Icon={Instagram} />
                 <SocialIcon Icon={Facebook} />
@@ -156,7 +165,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, categories }) => {
   );
 };
 
-// Simple helper for social icons
 const SocialIcon = ({ Icon }: { Icon: any }) => (
   <a href="#" className="p-2 bg-white rounded-full text-charcoal hover:bg-brandRed hover:text-white transition-all shadow-sm">
     <Icon className="w-4 h-4" />

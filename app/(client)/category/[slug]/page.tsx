@@ -1,23 +1,19 @@
-// app/category/[slug]/page.tsx
 import CategoryProducts from "@/components/CategoryProducts";
-import { getCategories, getMaterials } from "@/sanity/queries";
+import { getCategories, getMaterials } from "@/sanity/queries"; // Ensure these queries exist in your sanity/queries file
 import React from "react";
-export const runtime = 'edge';
 
-// Revalidate data every 60 seconds (ISR)
+// ISR: Revalidate every 60 seconds
 export const revalidate = 60;
 
-const CategoryPage = async ({ params }: { params: { slug: string } }) => {
-  // 1. Fetch data on the server
+const CategoryPage = async ({ params }: { params: Promise<{ slug: string }> }) => {
+  // 1. Await params (Next 15 requirement)
+  const { slug } = await params;
+
+  // 2. Fetch Filters & Categories Server-Side
   const categories = await getCategories();
-  const materials = await getMaterials(); // These act as your Dietary Preferences now
-  
-  // 2. Extract slug
-  const { slug } = params;
+  const materials = await getMaterials(); // Acts as Dietary Preferences
 
   return (
-    // 3. Render the main component directly. 
-    // We removed <Container> because CategoryProducts handles the full-width background itself.
     <CategoryProducts
       categories={categories}
       slug={slug}

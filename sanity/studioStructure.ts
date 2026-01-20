@@ -1,5 +1,5 @@
 import { StructureBuilder, DefaultDocumentNodeResolver } from "sanity/structure";
-// import { OrderSummaryView } from "./views/OrderSummaryView";
+import { OrderSummaryView } from "./views/OrderSummaryView";
 
 
 // 🔹 Add custom Admin View for Orders
@@ -8,7 +8,7 @@ export const defaultDocumentNode: DefaultDocumentNodeResolver = (S, { schemaType
   if (schemaType === "order") {
     return S.document().views([
       // 👇 Put Admin View first = default
-      // S.view.component(OrderSummaryView).title("Admin View"),
+      S.view.component(OrderSummaryView).title("Admin View"),
       S.view.form().title("Edit"),
     ]);
   }

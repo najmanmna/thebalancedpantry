@@ -9,8 +9,8 @@ import useCartStore from "@/store";
 import Loading from "@/components/Loading";
 import { urlFor } from "@/sanity/lib/image";
 import { toast } from "react-hot-toast";
+import ProductFAQ from "@/components/ProductFAQ";
 
-// Helper Interface for Props
 interface Props {
   product: any;
 }
@@ -20,7 +20,6 @@ export default function ProductClient({ product }: Props) {
   const addItem = useCartStore((state) => state.addItem);
   
   // --- IMAGES STATE ---
-  // Combine main image + gallery into one list
   const allImages = [product.mainImage, ...(product.gallery || [])].filter(Boolean);
   const [selectedImage, setSelectedImage] = useState(allImages[0]);
 
@@ -49,10 +48,10 @@ export default function ProductClient({ product }: Props) {
     setQty(1);
   }, [selectedBundle]);
 
-  // --- ACTIONS ---
   const handleAddToCart = () => {
     if (isOutOfStock) return;
     addItem(product, qty, selectedBundle);
+    toast.success("Added to Pantry!");
   };
 
   const handleBuyNow = () => {
@@ -70,9 +69,12 @@ export default function ProductClient({ product }: Props) {
         <div className="max-w-7xl mx-auto px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
 
           {/* --- LEFT: GALLERY & MAIN IMAGE --- */}
-          <div className="sticky top-24 flex flex-col-reverse sm:flex-row gap-4 h-auto sm:h-[600px]">
-             
-             {/* 1. Vertical Thumbnails (Hidden on tiny screens, shown below on mobile) */}
+          {/* FIXED: Changed 'sticky' to 'relative lg:sticky'. 
+             Now it scrolls naturally on mobile but sticks on desktop.
+          */}
+          <div className="relative lg:sticky lg:top-24 flex flex-col-reverse sm:flex-row gap-4 h-auto sm:h-[600px] z-10">
+              
+             {/* 1. Vertical Thumbnails */}
              {allImages.length > 1 && (
                <div className="flex sm:flex-col gap-3 overflow-x-auto sm:overflow-y-auto sm:w-24 scrollbar-hide py-2 sm:py-0">
                  {allImages.map((img: any, i: number) => (
@@ -100,7 +102,6 @@ export default function ProductClient({ product }: Props) {
              <div className="flex-1 bg-[#F3EFE0] rounded-[3rem] p-8 border border-charcoal/5 relative overflow-hidden group h-[400px] sm:h-full flex items-center justify-center">
                 <div className="absolute inset-0 border-[3px] border-charcoal/5 rounded-[2.5rem] m-4 pointer-events-none"></div>
                 
-                {/* Badge */}
                 {product.badge && (
                   <div className="absolute top-8 left-8 bg-brandRed text-cream font-sans font-bold text-xs uppercase tracking-widest px-3 py-1.5 rounded-full z-10 shadow-sm">
                     {product.badge}
@@ -111,7 +112,7 @@ export default function ProductClient({ product }: Props) {
                   <AnimatePresence mode="wait">
                     {selectedImage && (
                       <motion.div
-                        key={selectedImage._key || selectedImage.asset?._ref} // Unique key triggers animation
+                        key={selectedImage._key || selectedImage.asset?._ref} 
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0 }}
@@ -214,8 +215,8 @@ export default function ProductClient({ product }: Props) {
                 <span className="font-serif font-bold text-xl text-charcoal w-6 text-center">{qty}</span>
                 <button 
                   onClick={() => {
-                     if (qty < maxQty) setQty(q => q + 1);
-                     else toast.error(`Only ${maxQty} packs available!`);
+                      if (qty < maxQty) setQty(q => q + 1);
+                      else toast.error(`Only ${maxQty} packs available!`);
                   }} 
                   disabled={isOutOfStock || qty >= maxQty}
                   className="p-1 hover:bg-black/5 rounded-full transition-colors disabled:opacity-30"
@@ -286,6 +287,9 @@ export default function ProductClient({ product }: Props) {
                 </AnimatePresence>
               </div>
             )}
+
+
+            <ProductFAQ faqs={product.faq} />
 
           </div>
         </div>

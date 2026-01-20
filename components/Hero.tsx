@@ -91,7 +91,7 @@ export default function StrawberrySpotlight({ product }: { product: any }) {
                   <ArrowRight className="w-5 h-5" />
                 </button>
               </Link>
-              <Link href={`/shop/${product.slug?.current}`} className="hidden sm:flex items-center gap-2 font-sans font-semibold text-charcoal hover:text-brandRed transition-colors px-6">
+              <Link href={`/product/${product.slug?.current}`} className="hidden sm:flex items-center gap-2 font-sans font-semibold text-charcoal hover:text-brandRed transition-colors px-6">
                 View Details
                 <div className="h-px w-8 bg-charcoal"></div>
               </Link>

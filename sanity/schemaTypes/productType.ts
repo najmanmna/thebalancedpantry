@@ -151,6 +151,38 @@ export const productType = defineType({
       type: "array",
       of: [{ type: "reference", to: { type: "category" } }],
     }),
+
+    defineField({
+      name: 'faq',
+      title: 'Product FAQ',
+      type: 'array',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            {
+              name: 'question',
+              title: 'Question',
+              type: 'string',
+              validation: (Rule) => Rule.required(),
+            },
+            {
+              name: 'answer',
+              title: 'Answer',
+              type: 'text', // Using 'text' for multi-line answers
+              rows: 3,
+              validation: (Rule) => Rule.required(),
+            },
+          ],
+          preview: {
+            select: {
+              title: 'question',
+              subtitle: 'answer',
+            },
+          },
+        },
+      ],
+    }),
   ],
 
   // --- PREVIEW CONFIG ---

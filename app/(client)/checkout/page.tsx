@@ -3,19 +3,16 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, 
   CreditCard, 
   Truck, 
   ShieldCheck, 
-  Tag, 
   MapPin, 
   User, 
   Phone, 
   Mail,
-  CheckCircle2,
-  AlertCircle
+  CheckCircle2
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -27,7 +24,7 @@ import { client } from "@/sanity/lib/client";
 import { urlFor } from "@/sanity/lib/image";
 import { DISTRICTS } from "@/constants/SrilankaDistricts";
 
-// UI Components (styled via className)
+// UI Components
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,13 +45,7 @@ interface SanityPromoCode {
 
 const DISCOUNT_ELIGIBILITY_DATE = "2025-11-05T00:00:00Z";
 
-const SHIPPING_QUERY = `*[_type == "settings"][0]{
-  deliveryCharges {
-    colombo,
-    suburbs,
-    others
-  }
-}`;
+const SHIPPING_QUERY = `*[_type == "settings"][0].deliveryCharges`;
 
 // --- CONSTANTS ---
 const colomboCityAreas = [
@@ -103,10 +94,10 @@ export default function CheckoutPage() {
 
   // --- DISCOUNT STATE ---
   const [discountStatus, setDiscountStatus] = useState<"IDLE" | "CHECKING" | "ELIGIBLE" | "ALREADY_USED" | "NOT_ELIGIBLE">("IDLE");
-  const [promoCodeInput, setPromoCodeInput] = useState("");
+  const [appliedPromoCode, setAppliedPromoCode] = useState<SanityPromoCode | null>(null);
   const [promoStatus, setPromoStatus] = useState<"IDLE" | "CHECKING" | "APPLIED" | "ERROR">("IDLE");
   const [promoError, setPromoError] = useState<string | null>(null);
-  const [appliedPromoCode, setAppliedPromoCode] = useState<SanityPromoCode | null>(null);
+  const [promoCodeInput, setPromoCodeInput] = useState("");
 
   const [emailError, setEmailError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
@@ -141,7 +132,9 @@ export default function CheckoutPage() {
   // 1. Check Subscriber Discount
   useEffect(() => {
     const normalizedEmail = email.toLowerCase();
-    if (!isValidEmail(normalizedEmail) && !isValidPhone(form.phone)) {
+    const safePhone = form.phone || "";
+
+    if (!normalizedEmail && !safePhone) {
       setDiscountStatus("IDLE");
       return;
     }
@@ -150,28 +143,20 @@ export default function CheckoutPage() {
       async function checkDiscount() {
         setDiscountStatus("CHECKING");
         try {
-          const orderClauses = [];
-          const queryParams: any = { discountDate: DISCOUNT_ELIGIBILITY_DATE };
-          let subscriberCheckQuery = "false";
+          const query = `
+            {
+              "isEarlySubscriber": count(*[_type == "subscribers" && email == $email && _createdAt < $discountDate]) > 0,
+              "orderCount": count(*[_type == "order" && ((email == $email && $email != "") || (phone == $phone && $phone != "")) && status != "cancelled"])
+            }
+          `;
 
-          if (isValidEmail(normalizedEmail)) {
-            orderClauses.push("email == $email");
-            queryParams.email = normalizedEmail;
-            subscriberCheckQuery = `count(*[_type == "subscribers" && email == $email && _createdAt < $discountDate]) > 0`;
-          }
-          if (isValidPhone(form.phone)) {
-            orderClauses.push("phone == $phone");
-            queryParams.phone = form.phone;
-          }
+          const params = {
+            email: normalizedEmail,
+            phone: safePhone,
+            discountDate: DISCOUNT_ELIGIBILITY_DATE,
+          };
 
-          const orderCountQuery = orderClauses.length > 0
-            ? `count(*[_type == "order" && (${orderClauses.join(" || ")}) && status != "cancelled"])`
-            : "0";
-
-          const data = await client.fetch(`{
-              "isEarlySubscriber": ${subscriberCheckQuery},
-              "orderCount": ${orderCountQuery}
-            }`, queryParams);
+          const data = await client.fetch(query, params);
 
           if (data.isEarlySubscriber) {
             setDiscountStatus(data.orderCount === 0 ? "ELIGIBLE" : "ALREADY_USED");
@@ -190,7 +175,7 @@ export default function CheckoutPage() {
 
   // 2. Fetch Shipping Rates
   useEffect(() => {
-    client.fetch(SHIPPING_QUERY).then((data) => setDeliveryCharges(data?.deliveryCharges));
+    client.fetch(SHIPPING_QUERY).then((data) => setDeliveryCharges(data));
   }, []);
 
   // 3. Calculate Shipping Logic
@@ -217,8 +202,8 @@ export default function CheckoutPage() {
     if (items.length === 0) router.push("/shop");
   }, [items, router]);
 
-  // 5. Calculate Totals
-  const subtotal = items.reduce((t, it) => t + (it.product.price ?? 0) * it.quantity, 0);
+  // 5. Calculate Totals (Fixed: Uses item.price for bundles)
+  const subtotal = items.reduce((t, it) => t + (it.price * it.quantity), 0);
   
   // 6. Validate Promo Requirements
   useEffect(() => {
@@ -263,45 +248,6 @@ export default function CheckoutPage() {
   const total = subtotal - discountAmount + shippingCost;
 
   // --- HANDLERS ---
-  const handleApplyPromo = async () => {
-    setPromoStatus("CHECKING");
-    setPromoError(null);
-    const code = promoCodeInput.trim().toUpperCase();
-    
-    if (!code) { setPromoStatus("ERROR"); return; }
-    if (!email || !form.phone) { 
-        setPromoStatus("ERROR"); 
-        setPromoError("Enter email & phone first."); 
-        return; 
-    }
-
-    try {
-      const promo = await client.fetch<SanityPromoCode | null>(
-        `*[_type == "promoCode" && code == $code][0]`, { code }
-      );
-
-      if (!promo || !promo.isActive) throw new Error("Invalid or inactive code.");
-      if (subtotal < promo.minOrderAmount) throw new Error(`Min order Rs. ${promo.minOrderAmount} required.`);
-      if (isSubscriberDiscount) throw new Error("Subscriber discount already active.");
-
-      // Check First Order Only
-      if (promo.firstOrderOnly) {
-         const count = await client.fetch(
-            `count(*[_type == "order" && (email == $email || phone == $phone) && status != "cancelled"])`,
-            { email: email.toLowerCase(), phone: form.phone }
-         );
-         if (count > 0) throw new Error("This code is for first-time customers only.");
-      }
-
-      setAppliedPromoCode(promo);
-      setPromoStatus("APPLIED");
-      toast.success("Code Applied!");
-    } catch (err: any) {
-      setPromoStatus("ERROR");
-      setPromoError(err.message || "Invalid code");
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateEmailField() || !validatePhoneField()) {
@@ -323,9 +269,19 @@ export default function CheckoutPage() {
         items: items.map((i) => ({
           product: { _id: i.product._id },
           quantity: i.quantity,
-          price: i.product.price,
+          
+          // 🔹 FIX: Send the BUNDLE price, not the base product price
+          price: i.price, 
+          
           productName: i.product.name,
-          productImage: i.product.mainImage || i.product.images?.[0]
+          productImage: i.product.mainImage || i.product.images?.[0],
+
+          // 🔹 FIX: Wrap bundle details for the API route
+          bundle: {
+             title: i.bundleTitle,
+             count: i.bundleCount,
+             savings: i.bundleSavings
+          }
         })),
       };
 
@@ -532,38 +488,13 @@ export default function CheckoutPage() {
                                         {item.bundleTitle || "Single Pack"}
                                     </p>
                                 </div>
-                                <PriceFormatter amount={(item.product.price ?? 0) * item.quantity} className="text-sm font-medium" />
+                                {/* 🔹 FIX: Calculate line total using BUNDLE price */}
+                                <PriceFormatter amount={item.price * item.quantity} className="text-sm font-medium" />
                             </div>
                         ))}
                     </div>
 
                     <Separator className="bg-charcoal/10 mb-6" />
-
-                    {/* Promo Code */}
-                    {/* <div className="mb-6">
-                        <div className="flex gap-2">
-                            <div className="relative flex-1">
-                                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/30 w-3.5 h-3.5" />
-                                <Input 
-                                    placeholder="Promo Code" 
-                                    value={promoCodeInput}
-                                    onChange={e => setPromoCodeInput(e.target.value)}
-                                    disabled={discountStatus === "ELIGIBLE"}
-                                    className="h-10 pl-8 text-xs bg-cream/30 border-charcoal/10 rounded-lg focus:border-brandRed focus:ring-0"
-                                />
-                            </div>
-                            <Button 
-                                onClick={handleApplyPromo}
-                                disabled={promoStatus === "CHECKING" || discountStatus === "ELIGIBLE"}
-                                size="sm" 
-                                className="bg-charcoal text-white rounded-lg h-10 px-4 text-xs font-bold hover:bg-black"
-                            >
-                                {promoStatus === "CHECKING" ? "..." : "Apply"}
-                            </Button>
-                        </div>
-                        {promoError && <p className="text-[10px] text-red-500 mt-1.5 pl-1">{promoError}</p>}
-                        {promoStatus === "APPLIED" && <p className="text-[10px] text-green-600 mt-1.5 pl-1 font-bold">Promo Applied!</p>}
-                    </div> */}
 
                     {/* Calculations */}
                     <div className="space-y-3 mb-6">

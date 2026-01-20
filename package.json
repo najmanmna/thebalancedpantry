@@ -33,6 +33,7 @@
     "@sanity/icons": "^3.4.0",
     "@sanity/image-url": "^1.2.0",
     "@sanity/preview-url-secret": "^2.0.4",
+    "@sanity/ui": "^3.1.11",
     "@sanity/vision": "^3.99.0",
     "@sendgrid/mail": "^8.1.6",
     "@types/lodash": "^4.17.13",

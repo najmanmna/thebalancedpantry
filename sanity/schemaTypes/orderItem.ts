@@ -13,7 +13,8 @@ export const orderItemType = defineType({
       to: [{ type: "product" }],
     }),
 
-    // 🔹 Bundle Details (CRITICAL for Warehouse)
+    // 🔹 Bundle Details (CRITICAL for Warehouse & History)
+    // We snapshot these so if you change product bundles later, old orders remain accurate.
     defineField({
       name: "bundleTitle",
       title: "Bundle Name",
@@ -27,6 +28,13 @@ export const orderItemType = defineType({
       description: "How many base units are in this bundle? (e.g., 3, 6)",
       initialValue: 1,
     }),
+    // 👇 NEW: Missing field to track "Savings" shown at checkout
+    defineField({
+      name: "bundleSavings",
+      title: "Bundle Savings Label",
+      type: "string",
+      description: "Snapshot of the savings (e.g., 'Save Rs. 400')",
+    }),
 
     // 🔹 Order Quantity
     defineField({
@@ -39,6 +47,7 @@ export const orderItemType = defineType({
       name: "price",
       title: "Price per Bundle",
       type: "number",
+      description: "The price paid for this specific bundle configuration at checkout."
     }),
     
     // --- SNAPSHOT FIELDS (History) ---
@@ -60,17 +69,19 @@ export const orderItemType = defineType({
       snapName: "productName",
       snapImage: "productImage",
       bundle: "bundleTitle",
+      count: "bundleCount",
       quantity: "quantity",
       price: "price",
     },
-    prepare({ snapName, snapImage, bundle, quantity, price }) {
+    prepare({ snapName, snapImage, bundle, count, quantity, price }) {
       const name = snapName || "Unknown Product";
-      const bundleName = bundle ? `(${bundle})` : "";
+      // Show explicit bundle details in the preview
+      const bundleInfo = bundle ? `(${bundle} - ${count} packs)` : "(Single)";
       const total = (price || 0) * (quantity || 0);
 
       return {
-        title: `${quantity} x ${name} ${bundleName}`,
-        subtitle: `Total: Rs. ${total}`,
+        title: `${quantity} x ${name} ${bundleInfo}`,
+        subtitle: `Total: Rs. ${total} (@ ${price}/ea)`,
         media: snapImage,
       };
     },

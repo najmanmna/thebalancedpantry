@@ -7,7 +7,7 @@ export interface BundleOption {
   title: string;
   count: number;
   price: number;
-  savings?: string;
+  savings?: string; // e.g. "Save Rs. 400"
   tag?: string;
 }
 
@@ -29,6 +29,7 @@ export interface CartItem {
   quantity: number;     // How many OF THIS BUNDLE
   bundleCount: number;  // How many BASE UNITS inside this bundle (1, 3, 6)
   bundleTitle: string;  // "Single Pack", "The Stash"
+  bundleSavings?: string; // 🔹 ADDED: To track savings label
   price: number;        // The price of this specific bundle
 }
 
@@ -62,6 +63,7 @@ const useCartStore = create<StoreState>()(
           const bundleCount = bundle?.count || 1;
           const bundleTitle = bundle?.title || "Single Pack";
           const bundlePrice = bundle?.price || product.price;
+          const bundleSavings = bundle?.savings || ""; // 🔹 ADDED
 
           // 2. Generate Unique Key (Product + Bundle Name)
           // This allows "Single Pack" and "6-Pack" to exist as separate lines
@@ -104,6 +106,7 @@ const useCartStore = create<StoreState>()(
                   quantity,
                   bundleCount,
                   bundleTitle,
+                  bundleSavings, // 🔹 SAVED HERE
                   price: bundlePrice,
                 },
               ],

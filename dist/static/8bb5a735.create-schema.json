@@ -1,0 +1,853 @@
+[
+  {
+    "fields": [
+      {
+        "fields": [
+          {
+            "initialValue": 150,
+            "name": "colombo",
+            "type": "number"
+          },
+          {
+            "initialValue": 200,
+            "name": "suburbs",
+            "type": "number"
+          },
+          {
+            "initialValue": 300,
+            "name": "others",
+            "type": "number"
+          }
+        ],
+        "name": "deliveryCharges",
+        "type": "object"
+      }
+    ],
+    "name": "settings",
+    "type": "document",
+    "title": "Site Settings"
+  },
+  {
+    "of": [
+      {
+        "marks": {
+          "annotations": [
+            {
+              "fields": [
+                {
+                  "validation": [
+                    {
+                      "rules": [
+                        {
+                          "flag": "uri",
+                          "constraint": {
+                            "options": {
+                              "scheme": [
+                                "/^http$/",
+                                "/^https$/"
+                              ],
+                              "allowRelative": false,
+                              "relativeOnly": false,
+                              "allowCredentials": false
+                            }
+                          }
+                        }
+                      ],
+                      "level": "error"
+                    }
+                  ],
+                  "name": "href",
+                  "type": "url",
+                  "title": "URL"
+                }
+              ],
+              "name": "link",
+              "type": "object",
+              "title": "URL"
+            }
+          ],
+          "decorators": [
+            {
+              "value": "strong",
+              "title": "Strong"
+            },
+            {
+              "value": "em",
+              "title": "Emphasis"
+            }
+          ]
+        },
+        "lists": [
+          {
+            "value": "bullet",
+            "title": "Bullet"
+          }
+        ],
+        "styles": [
+          {
+            "value": "normal",
+            "title": "Normal"
+          },
+          {
+            "value": "h1",
+            "title": "H1"
+          },
+          {
+            "value": "h2",
+            "title": "H2"
+          },
+          {
+            "value": "h3",
+            "title": "H3"
+          },
+          {
+            "value": "h4",
+            "title": "H4"
+          },
+          {
+            "value": "blockquote",
+            "title": "Quote"
+          }
+        ],
+        "of": [],
+        "type": "block"
+      },
+      {
+        "options": {
+          "hotspot": true
+        },
+        "fields": [
+          {
+            "name": "alt",
+            "type": "string",
+            "title": "Alternative Text"
+          }
+        ],
+        "type": "image"
+      }
+    ],
+    "name": "blockContent",
+    "type": "array"
+  },
+  {
+    "fields": [
+      {
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "options": {
+          "source": "title"
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "custom"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "slug",
+        "type": "slug"
+      },
+      {
+        "name": "description",
+        "type": "text"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "min",
+                "constraint": 0
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "Used to manually order categories. 1 comes first, 2 second, etc. Categories without a number will appear last.",
+        "name": "sortOrder",
+        "type": "number"
+      },
+      {
+        "options": {
+          "hotspot": true
+        },
+        "name": "image",
+        "type": "image",
+        "title": "Category Image"
+      }
+    ],
+    "name": "category",
+    "type": "document"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "e.g., Freeze Dried Strawberries",
+        "name": "name",
+        "type": "string",
+        "title": "Product Name"
+      },
+      {
+        "options": {
+          "source": "name",
+          "maxLength": 96
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "custom"
+              },
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "slug",
+        "type": "slug"
+      },
+      {
+        "description": "The catchy phrase under the title. e.g., 'The Nostalgia of Fresh Fruit, Now Crunchy.'",
+        "name": "subtitle",
+        "type": "string",
+        "title": "Hero Subtitle",
+        "fieldset": "details"
+      },
+      {
+        "rows": 4,
+        "description": "The paragraph explaining why it's good.",
+        "name": "description",
+        "type": "text",
+        "title": "Marketing Description",
+        "fieldset": "details"
+      },
+      {
+        "description": "Short phrases like 'Flash Frozen', 'No Preservatives', 'Gluten Free'",
+        "of": [
+          {
+            "type": "string"
+          }
+        ],
+        "name": "benefits",
+        "type": "array",
+        "title": "Key Benefits (Trust Stamps)",
+        "fieldset": "details"
+      },
+      {
+        "description": "e.g., 'Best Seller', 'New Arrival', 'Low Sugar'",
+        "name": "badge",
+        "type": "string",
+        "title": "Product Badge"
+      },
+      {
+        "options": {
+          "hotspot": true
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "Ideally a transparent PNG of the bowl or pouch for the Hero section.",
+        "name": "mainImage",
+        "type": "image",
+        "title": "Main Product Image"
+      },
+      {
+        "description": "Additional angles, packaging shots, or lifestyle photos.",
+        "of": [
+          {
+            "options": {
+              "hotspot": true
+            },
+            "type": "image"
+          }
+        ],
+        "name": "gallery",
+        "type": "array",
+        "title": "Gallery / Lifestyle Images"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              },
+              {
+                "flag": "min",
+                "constraint": 0
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "price",
+        "type": "number",
+        "title": "Base Price (1 Unit)",
+        "fieldset": "pricing"
+      },
+      {
+        "description": "Define the 3-pack, 6-pack options here to encourage bulk buying.",
+        "of": [
+          {
+            "fields": [
+              {
+                "name": "title",
+                "type": "string",
+                "title": "Bundle Name (e.g. The Stash)"
+              },
+              {
+                "name": "count",
+                "type": "number",
+                "title": "Pack Count (e.g. 3)"
+              },
+              {
+                "name": "price",
+                "type": "number",
+                "title": "Bundle Price (LKR)"
+              },
+              {
+                "name": "savings",
+                "type": "string",
+                "title": "Savings Label (e.g. Save Rs. 200)"
+              },
+              {
+                "name": "tag",
+                "type": "string",
+                "title": "Tag (e.g. Most Popular)"
+              }
+            ],
+            "type": "object"
+          }
+        ],
+        "name": "bundleOptions",
+        "type": "array",
+        "title": "Bundle Variants",
+        "fieldset": "pricing"
+      },
+      {
+        "name": "sku",
+        "type": "string",
+        "title": "SKU / Item Code",
+        "fieldset": "inventory"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              },
+              {
+                "flag": "min",
+                "constraint": 0
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "Total quantity initially added to inventory.",
+        "name": "openingStock",
+        "type": "number",
+        "fieldset": "inventory"
+      },
+      {
+        "initialValue": 0,
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "min",
+                "constraint": 0
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "Quantity sold (automatically updated by orders).",
+        "name": "stockOut",
+        "type": "number",
+        "title": "Stock Out / Sold",
+        "fieldset": "inventory"
+      },
+      {
+        "fields": [
+          {
+            "name": "servingSize",
+            "type": "string"
+          },
+          {
+            "name": "calories",
+            "type": "string"
+          },
+          {
+            "name": "sugar",
+            "type": "string",
+            "title": "Total Sugar"
+          },
+          {
+            "name": "protein",
+            "type": "string"
+          },
+          {
+            "name": "fat",
+            "type": "string",
+            "title": "Total Fat"
+          }
+        ],
+        "name": "nutrition",
+        "type": "object",
+        "title": "Nutrition Facts",
+        "fieldset": "nutrition"
+      },
+      {
+        "of": [
+          {
+            "to": [
+              {
+                "type": "category"
+              }
+            ],
+            "type": "reference",
+            "title": "Reference to category"
+          }
+        ],
+        "name": "categories",
+        "type": "array"
+      }
+    ],
+    "fieldsets": [
+      {
+        "name": "details",
+        "title": "Product Details & Story"
+      },
+      {
+        "name": "pricing",
+        "title": "Pricing & Bundles"
+      },
+      {
+        "name": "inventory",
+        "title": "Inventory Tracking"
+      },
+      {
+        "name": "nutrition",
+        "title": "Nutrition & Ingredients"
+      }
+    ],
+    "name": "product",
+    "type": "document",
+    "title": "Products"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "readOnly": true,
+        "name": "orderNumber",
+        "type": "string"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "readOnly": true,
+        "name": "orderDate",
+        "type": "datetime"
+      },
+      {
+        "options": {
+          "list": [
+            {
+              "title": "Pending Payment",
+              "value": "pending"
+            },
+            {
+              "title": "Processing",
+              "value": "processing"
+            },
+            {
+              "title": "Shipped",
+              "value": "shipped"
+            },
+            {
+              "title": "Delivered",
+              "value": "delivered"
+            },
+            {
+              "title": "Cancelled",
+              "value": "cancelled"
+            }
+          ],
+          "layout": "radio"
+        },
+        "initialValue": "pending",
+        "name": "status",
+        "type": "string",
+        "title": "Customer Status"
+      },
+      {
+        "rows": 3,
+        "description": "Notes for the packing team (e.g. 'Pack with extra care').",
+        "name": "internalNote",
+        "type": "text",
+        "title": "Internal Notes"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "customerName",
+        "type": "string"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "phone",
+        "type": "string",
+        "title": "Phone Number"
+      },
+      {
+        "name": "email",
+        "type": "string"
+      },
+      {
+        "fields": [
+          {
+            "name": "line1",
+            "type": "string",
+            "title": "Address Line"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          },
+          {
+            "name": "district",
+            "type": "string"
+          },
+          {
+            "name": "notes",
+            "type": "text",
+            "title": "Delivery Instructions"
+          }
+        ],
+        "name": "address",
+        "type": "object",
+        "title": "Shipping Address"
+      },
+      {
+        "of": [
+          {
+            "type": "orderItem"
+          }
+        ],
+        "name": "items",
+        "type": "array",
+        "title": "Cart Items"
+      },
+      {
+        "options": {
+          "list": [
+            {
+              "title": "Cash on Delivery",
+              "value": "COD"
+            },
+            {
+              "title": "Bank Transfer",
+              "value": "BANK"
+            }
+          ]
+        },
+        "name": "paymentMethod",
+        "type": "string"
+      },
+      {
+        "readOnly": true,
+        "name": "subtotal",
+        "type": "number"
+      },
+      {
+        "readOnly": true,
+        "name": "discountAmount",
+        "type": "number",
+        "title": "Discount Applied"
+      },
+      {
+        "readOnly": true,
+        "name": "discountLabel",
+        "type": "string",
+        "title": "Discount Code/Reason"
+      },
+      {
+        "readOnly": true,
+        "name": "shippingCost",
+        "type": "number",
+        "title": "Shipping Fee"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "readOnly": true,
+        "name": "total",
+        "type": "number",
+        "title": "Grand Total"
+      }
+    ],
+    "name": "order",
+    "type": "document",
+    "title": "Orders"
+  },
+  {
+    "fields": [
+      {
+        "to": [
+          {
+            "type": "product"
+          }
+        ],
+        "name": "product",
+        "type": "reference"
+      },
+      {
+        "description": "e.g., 'The Stash' or 'Family Pack'",
+        "name": "bundleTitle",
+        "type": "string",
+        "title": "Bundle Name"
+      },
+      {
+        "initialValue": 1,
+        "description": "How many base units are in this bundle? (e.g., 3, 6)",
+        "name": "bundleCount",
+        "type": "number",
+        "title": "Packs per Bundle"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "min",
+                "constraint": 1
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "quantity",
+        "type": "number",
+        "title": "Quantity (Bundles)"
+      },
+      {
+        "name": "price",
+        "type": "number",
+        "title": "Price per Bundle"
+      },
+      {
+        "name": "productName",
+        "type": "string",
+        "title": "Product Name (snapshot)"
+      },
+      {
+        "options": {
+          "hotspot": true
+        },
+        "name": "productImage",
+        "type": "image",
+        "title": "Product Image (snapshot)"
+      }
+    ],
+    "name": "orderItem",
+    "type": "object"
+  },
+  {
+    "fields": [
+      {
+        "options": {
+          "list": [
+            {
+              "title": "Desktop",
+              "value": "desktop"
+            },
+            {
+              "title": "Mobile",
+              "value": "mobile"
+            },
+            {
+              "title": "Both",
+              "value": "both"
+            }
+          ],
+          "layout": "radio"
+        },
+        "initialValue": "both",
+        "name": "showOn",
+        "type": "string"
+      },
+      {
+        "fields": [
+          {
+            "options": {
+              "hotspot": true
+            },
+            "name": "image",
+            "type": "image"
+          },
+          {
+            "options": {
+              "list": [
+                {
+                  "title": "Light",
+                  "value": "light"
+                },
+                {
+                  "title": "Dark",
+                  "value": "dark"
+                }
+              ],
+              "layout": "radio"
+            },
+            "initialValue": "dark",
+            "name": "buttonTheme",
+            "type": "string"
+          }
+        ],
+        "name": "desktop",
+        "type": "object"
+      },
+      {
+        "fields": [
+          {
+            "options": {
+              "hotspot": true
+            },
+            "name": "image",
+            "type": "image"
+          },
+          {
+            "options": {
+              "list": [
+                {
+                  "title": "Light",
+                  "value": "light"
+                },
+                {
+                  "title": "Dark",
+                  "value": "dark"
+                }
+              ],
+              "layout": "radio"
+            },
+            "initialValue": "dark",
+            "name": "buttonTheme",
+            "type": "string"
+          }
+        ],
+        "name": "mobile",
+        "type": "object"
+      }
+    ],
+    "name": "banner",
+    "type": "document"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "Select the product to feature in the main hero section.",
+        "to": [
+          {
+            "type": "product"
+          }
+        ],
+        "name": "heroProduct",
+        "type": "reference",
+        "title": "Hero Spotlight Product"
+      }
+    ],
+    "name": "homepage",
+    "type": "document",
+    "title": "Homepage Settings"
+  }
+]

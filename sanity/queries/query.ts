@@ -241,6 +241,12 @@ const PRODUCT_BY_SLUG_QUERY = defineQuery(`
       _id,
       title,
       slug
+    },
+
+    faq[] {
+      _key,
+      question,
+      answer
     }
   }
 `);

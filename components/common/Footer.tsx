@@ -18,11 +18,12 @@ export default function Footer() {
           
           {/* Column 1: Brand (Span 4) */}
           <div className="md:col-span-4 flex flex-col gap-6">
-            <div className="scale-90 origin-left mix-blend-difference">
+            <div className="scale-110 origin-left brightness-0 invert">
                <LogoWhite />
             </div>
             <p className="font-sans text-[#F3EFE0]/60 leading-relaxed max-w-sm">
-              We believe snacking shouldn't be a sin. We freeze time (and fruit) to bring you the crunchiest, healthiest snacks in Sri Lanka.
+              Snacking shouldn’t be a sin.
+We bring you wholesome, low-calorie products made with honest, nourishing ingredients to Srilanka.
             </p>
             <div className="flex gap-4">
               <SocialBtn icon={Instagram} href="#" />

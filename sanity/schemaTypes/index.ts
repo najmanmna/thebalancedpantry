@@ -5,7 +5,7 @@ import { categoryType } from "./categoryType";
 import { productType } from "./productType";
 import { orderType } from "./orderType";
 import { orderItemType } from "./orderItem";
-import { bannerType } from "./bannerType";
+// import { bannerType } from "./bannerType";
 // import subscribersType from "./subscribersType";
 
 
@@ -25,7 +25,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     productType,
     orderType,
 orderItemType,
-    bannerType,
+    // bannerType,
     homepageType
     // subscribersType,
     // pageType,
