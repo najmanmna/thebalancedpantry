@@ -23,7 +23,7 @@ export default function Footer() {
             </div>
             <p className="font-sans text-[#F3EFE0]/60 leading-relaxed max-w-sm">
               Snacking shouldn’t be a sin.
-We bring you wholesome, low-calorie products made with honest, nourishing ingredients to Srilanka.
+              We bring you wholesome, low-calorie products made with honest, nourishing ingredients to Sri Lanka.
             </p>
             <div className="flex gap-4">
               <SocialBtn icon={Instagram} href="#" />
@@ -38,8 +38,6 @@ We bring you wholesome, low-calorie products made with honest, nourishing ingred
             <ul className="space-y-4 font-sans text-[#F3EFE0]/60 text-sm">
               <li><Link href="/shop" className="hover:text-brandRed transition-colors">Strawberries</Link></li>
               <li><Link href="#" className="hover:text-brandRed transition-colors">Durian (Coming Soon)</Link></li>
-              {/* <li><Link href="#" className="hover:text-brandRed transition-colors">Mixed Pack</Link></li>
-              <li><Link href="#" className="hover:text-brandRed transition-colors">Gift Bundles</Link></li> */}
             </ul>
           </div>
 
@@ -48,18 +46,13 @@ We bring you wholesome, low-calorie products made with honest, nourishing ingred
             <h4 className="font-serif font-bold text-lg mb-6">Company</h4>
             <ul className="space-y-4 font-sans text-[#F3EFE0]/60 text-sm">
               <li><Link href="/science" className="hover:text-brandRed transition-colors">The Science</Link></li>
-              {/* <li><Link href="/track-order" className="hover:text-brandRed transition-colors">Track Order</Link></li> */}
-              {/* <li><Link href="#" className="hover:text-brandRed transition-colors">Wholesale</Link></li> */}
-              <li><Link href="#" className="hover:text-brandRed transition-colors">Contact Us</Link></li>
+              <li><Link href="/contact" className="hover:text-brandRed transition-colors">Contact Us</Link></li>
             </ul>
           </div>
 
           {/* Column 4: Newsletter (Span 3) */}
           <div className="md:col-span-3">
             <h4 className="font-serif font-bold text-lg mb-4">Stay Crunchy</h4>
-            {/* <p className="font-sans text-[#F3EFE0]/60 text-xs mb-4">
-              Get 10% off your first order and secret flavor drops.
-            </p> */}
             <div className="flex gap-2">
               <input 
                 type="email" 
@@ -76,10 +69,28 @@ We bring you wholesome, low-calorie products made with honest, nourishing ingred
 
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 font-sans text-xs text-[#F3EFE0]/40">
-          <p>© 2026 The Balanced Pantry. All rights reserved.</p>
+          
+          {/* Copyright & Credits */}
+          <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 text-center md:text-left">
+            <p>© 2026 The Balanced Pantry. All rights reserved.</p>
+            <span className="hidden md:inline-block opacity-20">|</span>
+            <p>
+              Designed & Developed by{" "}
+              <a 
+                href="https://ahamedwebstudio.com" // 👈 Add your URL here
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="hover:text-[#F3EFE0] transition-colors font-semibold"
+              >
+                Ahamed Web Studio
+              </a>
+            </p>
+          </div>
+
+          {/* Legal Links */}
           <div className="flex gap-6">
-            <Link href="#" className="hover:text-[#F3EFE0]">Privacy Policy</Link>
-            <Link href="#" className="hover:text-[#F3EFE0]">Terms of Service</Link>
+            <Link href="/privacy" className="hover:text-[#F3EFE0]">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-[#F3EFE0]">Terms of Service</Link>
           </div>
         </div>
 

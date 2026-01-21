@@ -30,11 +30,11 @@ export const metadata: Metadata = {
   },
   description:
     "Experience the crunch of 100% real fruit. Flash-frozen to lock in nutrients. No sugar added. Imported quality, delivered islandwide in Sri Lanka.",
-  icons: {
-    icon: "/favicon.png", // Make sure to update this image file later
-    shortcut: "/favicon.png",
-    apple: "/favicon.png",
-  },
+  // icons: {
+  //   icon: "/favicon.png", // Make sure to update this image file later
+  //   shortcut: "/favicon.png",
+  //   apple: "/favicon.png",
+  // },
   openGraph: {
     title: "The Balanced Pantry | Crunchy Real Fruit Snacks",
     description:

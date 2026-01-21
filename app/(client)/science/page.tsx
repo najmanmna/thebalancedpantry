@@ -483,7 +483,7 @@ function CTASection() {
         <p className="text-lg text-charcoal/60 mb-8">
           Experience the crunch that physics built. No additives, just pure fruit engineering.
         </p>
-        <Link href="/shop/all">
+        <Link href="/shop">
           <Button className="bg-brandRed text-cream text-xl px-10 py-6 rounded-full font-serif font-bold shadow-[4px_4px_0px_0px_#4A3728] hover:shadow-[2px_2px_0px_0px_#4A3728] hover:translate-y-[2px] transition-all">
              Shop The Pantry
           </Button>
