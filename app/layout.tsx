@@ -2,20 +2,18 @@ import "./globals.css";
 
 import React from "react";
 import type { Metadata } from "next";
-import { Fraunces, Quicksand } from "next/font/google"; // Updated Fonts
+import { Fraunces, Quicksand } from "next/font/google";
 import { SanityLive } from "@/sanity/lib/live";
 import { Toaster } from "react-hot-toast";
-import WhatsAppButton from "@/components/WhatsAppButton";
 
-// 1. SETUP RETRO SERIF FONT (Headings)
+// 1. SETUP FONTS
+// Note: We don't need to configure axes unless you have a specific visual need.
 const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-serif",
   display: "swap",
-  // axes: ["SOFT", "WONK"], // Optional: Adds extra retro character
 });
 
-// 2. SETUP SOFT SANS FONT (Body)
 const quicksand = Quicksand({
   subsets: ["latin"],
   variable: "--font-sans",
@@ -23,7 +21,11 @@ const quicksand = Quicksand({
   display: "swap",
 });
 
+// 2. METADATA OPTIMIZATION
 export const metadata: Metadata = {
+  // ✅ Fix: Set metadataBase to your production URL to fix OG Image issues
+  metadataBase: new URL("https://thebalancedpantry.lk"),
+  
   title: {
     template: "%s | The Balanced Pantry",
     default: "The Balanced Pantry | Premium Freeze-Dried Snacks",
@@ -31,7 +33,7 @@ export const metadata: Metadata = {
   description:
     "Experience the crunch of 100% real fruit. Flash-frozen to lock in nutrients. No sugar added. Imported quality, delivered islandwide in Sri Lanka.",
   icons: {
-    icon: "/icon.png", // Make sure to update this image file later
+    icon: "/icon.png", 
     shortcut: "/icon.png",
     apple: "/icon.png",
   },
@@ -43,7 +45,7 @@ export const metadata: Metadata = {
     siteName: "The Balanced Pantry",
     images: [
       {
-        url: "/og-image.jpg", // Update this with a shot of the strawberry bowl
+        url: "/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "The Balanced Pantry - Freeze Dried Strawberries",
@@ -57,35 +59,29 @@ export const metadata: Metadata = {
 const RootLayout = async ({ children }: { children: React.ReactNode }) => {
   return (
     <html lang="en" className={`${fraunces.variable} ${quicksand.variable}`}>
-      <body
-        // 3. GLOBAL THEME APPLICATION
-        // bg-cream: Sets the vintage paper background
-        // text-charcoal: Sets the dark brown text default
-        // antialiased: Makes fonts crisp
-        className="antialiased bg-cream text-charcoal selection:bg-brandRed/30"
-      >
+      <body className="antialiased bg-cream text-charcoal selection:bg-brandRed/30">
         
         {children}
 
-        {/* 4. CUSTOM RETRO TOASTER */}
+        {/* CUSTOM RETRO TOASTER */}
         <Toaster
           position="bottom-right"
           toastOptions={{
             style: {
-              background: "#4A3728", // Charcoal/Brown background
-              color: "#F3EFE0",      // Cream text
+              background: "#4A3728", // Charcoal
+              color: "#F3EFE0",      // Cream
               fontFamily: "var(--font-sans)",
-              border: "1px solid #5D7052", // Subtle Sage Green border
+              border: "1px solid #5D7052", // Sage Green
             },
             success: {
               iconTheme: {
-                primary: "#5D7052", // Sage Green checkmark
+                primary: "#5D7052",
                 secondary: "#F3EFE0",
               },
             },
             error: {
               iconTheme: {
-                primary: "#D64545", // Brand Red X
+                primary: "#D64545",
                 secondary: "#F3EFE0",
               },
             },
@@ -95,8 +91,6 @@ const RootLayout = async ({ children }: { children: React.ReactNode }) => {
         {/* Sanity Live Content */}
         <SanityLive />
         
-        {/* Floating WhatsApp Button */}
-        {/* <WhatsAppButton /> */}
       </body>
     </html>
   );

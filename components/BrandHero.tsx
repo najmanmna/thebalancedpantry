@@ -6,9 +6,9 @@ import { motion } from "framer-motion";
 import { ArrowDown, Heart, Sun, Smile, Wheat, LucideIcon } from "lucide-react";
 
 // Images
-import pantryJar1 from "@/images/pantryJar1.png";
-import pantryFruit1 from "@/images/pantryFruit1.png";
-import pantryGrain1 from "@/images/pantryGrain1.png";
+import pantryJar1 from "@/images/pantryJar1.webp";
+import pantryFruit1 from "@/images/pantryFruit1.webp";
+import pantryGrain1 from "@/images/pantryGrain1.webp";
 
 // --- Constants ---
 // Optimization: Use a Data URI for noise instead of an external HTTP request (Zero Latency)
