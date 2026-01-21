@@ -311,7 +311,7 @@ const generateCustomerEmail = (order: any, items: any[]) => {
 
         <div style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px; color: #999;">
           <p style="margin: 0;">The Balanced Pantry, Colombo, Sri Lanka.</p>
-          <p style="margin: 5px 0;">Questions? Reply to this email.</p>
+          
         </div>
       </div>
     </body>

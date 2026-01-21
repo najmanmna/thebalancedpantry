@@ -13,22 +13,61 @@ async function getHeroProduct() {
   return client.fetch(groq`
     *[_type == "homepage"][0].heroProduct->{
        _id,
-       name,
-       slug,
-       sku,
-       subtitle,
-       badge,
-       description,
-       price,
-       openingStock,
-       stockOut,
-       "availableStock": coalesce(openingStock, 0) - coalesce(stockOut, 0),
-       mainImage { asset },
-       gallery[] { _key, asset },
-       bundleOptions[] { title, count, price, savings, tag },
-       benefits, 
-       nutrition { servingSize, calories, sugar, protein, fat },
-       categories[]->{ _id, title, slug }
+    name,
+    slug,
+    sku,
+    subtitle,  // 🔹 New: For the hero text
+    badge,     // 🔹 New: For "Best Seller" tags
+    description,
+    price,
+    
+    // 🔹 Inventory Logic
+    openingStock,
+    stockOut,
+    "availableStock": coalesce(openingStock, 0) - coalesce(stockOut, 0),
+    
+    // 🔹 Imagery (Updated structure)
+    mainImage {
+      asset
+    },
+    gallery[] {
+      _key,
+      asset
+    },
+
+    // 🔹 Business Logic (Bundles)
+    bundleOptions[] {
+      title,
+      count,
+      price,
+      savings,
+      tag
+    },
+
+    // 🔹 Storytelling & Trust
+    benefits, // The "Trust Stamps" array
+
+    // 🔹 Health Data
+    nutrition {
+      servingSize,
+      calories,
+      sugar,
+      protein,
+      fat
+    },
+
+    categories[]->{
+      _id,
+      title,
+      slug
+    },
+
+    faq[] {
+      _key,
+      question,
+      answer
+    }
+  
     }
   `);
 }
