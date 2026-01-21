@@ -2,7 +2,8 @@
 
 import { useState, FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, CheckCircle2, Mail, MapPin, Phone } from "lucide-react";
+import { Send, CheckCircle2, Mail, Phone } from "lucide-react";
+import toast from "react-hot-toast";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,14 +33,33 @@ const ContactPage = () => {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    
-    // Simulate API Call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    // Reset
-    setFormData({ name: "", email: "", message: "" });
-    setLoading(false);
-    setSuccess(true);
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to send message");
+      }
+
+      // Success Logic
+      setSuccess(true);
+      setFormData({ name: "", email: "", message: "" });
+      toast.success("Message sent successfully!");
+
+    } catch (error) {
+      console.error(error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -72,17 +92,18 @@ const ContactPage = () => {
             </div>
 
             <div className="space-y-6 pt-8 border-t border-charcoal/10">
-              <div className="flex items-start gap-4 group">
+              {/* <div className="flex items-start gap-4 group">
                 <div className="w-12 h-12 rounded-full bg-white border border-charcoal/10 flex items-center justify-center text-charcoal/60 group-hover:text-brandRed group-hover:border-brandRed/30 transition-all shadow-sm">
                   <Mail className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="font-serif font-bold text-xl text-charcoal">Email Us</h3>
-                  <p className="text-charcoal/60">hello@balancedpantry.lk</p>
+                  <p className="text-charcoal/60">hello@thebalancedpantry.lk</p>
                 </div>
-              </div>
+              </div> */}
 
-              <div className="flex items-start gap-4 group">
+              {/* HIDING CALL US SECTION FOR NOW */}
+              {/* <div className="flex items-start gap-4 group">
                 <div className="w-12 h-12 rounded-full bg-white border border-charcoal/10 flex items-center justify-center text-charcoal/60 group-hover:text-brandRed group-hover:border-brandRed/30 transition-all shadow-sm">
                   <Phone className="w-5 h-5" />
                 </div>
@@ -90,20 +111,9 @@ const ContactPage = () => {
                   <h3 className="font-serif font-bold text-xl text-charcoal">Call Us</h3>
                   <p className="text-charcoal/60">+94 77 123 4567</p>
                 </div>
-              </div>
-
-              {/* <div className="flex items-start gap-4 group">
-                <div className="w-12 h-12 rounded-full bg-white border border-charcoal/10 flex items-center justify-center text-charcoal/60 group-hover:text-brandRed group-hover:border-brandRed/30 transition-all shadow-sm">
-                  <MapPin className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-serif font-bold text-xl text-charcoal">Visit Us</h3>
-                  <p className="text-charcoal/60">
-                    No. 123, Pantry Lane,<br />
-                    Colombo 07, Sri Lanka.
-                  </p>
-                </div>
-              </div> */}
+              </div> 
+              */}
+              
             </div>
           </motion.div>
 
@@ -128,7 +138,7 @@ const ContactPage = () => {
                     required
                     disabled={loading}
                     placeholder="e.g. John Doe"
-                    className="bg-cream/30 border-charcoal/10 rounded-xl h-12 focus:border-brandRed focus:ring-0"
+                    className="bg-cream/30 border-charcoal/10 rounded-xl h-12 focus:border-brandRed focus:ring-0 text-charcoal"
                   />
                 </div>
 
@@ -143,7 +153,7 @@ const ContactPage = () => {
                     required
                     disabled={loading}
                     placeholder="john@example.com"
-                    className="bg-cream/30 border-charcoal/10 rounded-xl h-12 focus:border-brandRed focus:ring-0"
+                    className="bg-cream/30 border-charcoal/10 rounded-xl h-12 focus:border-brandRed focus:ring-0 text-charcoal"
                   />
                 </div>
 
@@ -158,7 +168,7 @@ const ContactPage = () => {
                     disabled={loading}
                     rows={5}
                     placeholder="How can we help you?"
-                    className="bg-cream/30 border-charcoal/10 rounded-xl resize-none focus:border-brandRed focus:ring-0"
+                    className="bg-cream/30 border-charcoal/10 rounded-xl resize-none focus:border-brandRed focus:ring-0 text-charcoal"
                   />
                 </div>
 
