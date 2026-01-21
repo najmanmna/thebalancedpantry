@@ -7,5 +7,7 @@ import { dataset, projectId } from '../env'
 const builder = createImageUrlBuilder({ projectId, dataset })
 
 export const urlFor = (source: SanityImageSource) => {
-  return builder.image(source)
+  // ✅ FIX: Force 'WebP' format and 'Max' fit globally
+  // This automatically converts huge PNGs to efficient WebP images
+  return builder.image(source).auto('format').fit('max');
 }

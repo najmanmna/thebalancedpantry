@@ -36,11 +36,12 @@ export default function StrawberrySpotlight({ product }: { product: ProductProps
   // We request slightly larger (800w) for high DPI screens, cropped to 4:5 aspect ratio.
   const imageUrl = product.mainImage
     ? urlFor(product.mainImage)
-        .width(800)
-        .height(1000)
+        .width(600)
+        .height(600)
         .fit("crop")
         .auto("format") // Forces WebP/AVIF
         .quality(80)
+        .auto("format")
         .url()
     : null;
 
@@ -152,7 +153,7 @@ export default function StrawberrySpotlight({ product }: { product: ProductProps
                    // Mobile: 100% width, Tablet: 50%, Desktop: ~600px
                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
                    className="object-contain drop-shadow-2xl"
-                   priority={false} // Change to TRUE if this component is "above the fold"
+                   priority={true} // Change to TRUE if this component is "above the fold"
                  />
                )}
             </motion.div>

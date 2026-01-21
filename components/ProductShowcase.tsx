@@ -226,7 +226,7 @@ export default function ProductShowcase({ product }: { product: Product }) {
 const ProductImageWrapper = React.memo(function ProductImageWrapper({ product }: { product: Product }) {
   // Optimization: Request specific dimensions (800x800) and WebP format
   const imageUrl = product.mainImage 
-    ? urlFor(product.mainImage).width(800).height(800).fit('crop').auto('format').url() 
+    ? urlFor(product.mainImage).width(600).height(600).fit('crop').auto('format').url() 
     : null;
 
   return (
@@ -247,7 +247,7 @@ const ProductImageWrapper = React.memo(function ProductImageWrapper({ product }:
             alt={product.name}
             fill 
             // Optimization: Load smaller images on mobile
-            sizes="(max-width: 768px) 100vw, 50vw"
+            sizes="(max-width: 768px) 100vw, 30vw"
             className="object-contain"
             priority // Load ASAP as this is the main product image
           />
