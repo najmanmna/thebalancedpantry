@@ -87,7 +87,7 @@ export default function UsageSection() {
         className="text-center mt-16"
       >
         <p className="font-sans text-charcoal/60 text-sm mb-4">Have a creative recipe?</p>
-        <a href="#" className="inline-block border-b-2 border-charcoal text-charcoal font-serif font-bold hover:text-brandRed hover:border-brandRed transition-colors pb-0.5">
+        <a href="https://www.instagram.com/the_balanced_pantry_lk?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw== hover:border-brandRed transition-colors pb-0.5">
           Tag us @TheBalancedPantry
         </a>
       </motion.div>
