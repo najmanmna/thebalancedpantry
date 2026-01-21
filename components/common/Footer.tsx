@@ -45,7 +45,7 @@ export default function Footer() {
           <div className="md:col-span-2">
             <h4 className="font-serif font-bold text-lg mb-6">Company</h4>
             <ul className="space-y-4 font-sans text-[#F3EFE0]/60 text-sm">
-              <li><Link href="/science" className="hover:text-brandRed transition-colors">The Science</Link></li>
+              {/* <li><Link href="/science" className="hover:text-brandRed transition-colors">The Science</Link></li> */}
               <li><Link href="/contact" className="hover:text-brandRed transition-colors">Contact Us</Link></li>
             </ul>
           </div>

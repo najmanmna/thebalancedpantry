@@ -54,7 +54,7 @@ export default async function Home() {
       {isFreezeDried && (
         <>
           <UsageSection />
-          <ScienceCTA /> {/* 👈 Added here: breaks up the flow nicely before the showcase */}
+          {/* <ScienceCTA /> 👈 Added here: breaks up the flow nicely before the showcase */}
         </>
       )}
 
