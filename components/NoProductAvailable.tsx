@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { Loader2, PackageOpen } from "lucide-react";
 
 const NoProductAvailable = ({
   selectedTab,
@@ -14,50 +14,46 @@ const NoProductAvailable = ({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center py-10 min-h-80 space-y-4 text-center bg-gray-100 rounded-lg w-full mt-10",
+        "flex flex-col items-center justify-center py-16 min-h-[400px] space-y-6 text-center bg-white/50 border-2 border-dashed border-charcoal/10 rounded-[2.5rem] w-full mt-10 backdrop-blur-sm",
         className
       )}
     >
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
+        className="w-20 h-20 bg-cream rounded-full flex items-center justify-center mb-2"
       >
-        <h2 className="text-2xl font-bold text-gray-800">
-          No Product Available
-        </h2>
+        <PackageOpen className="w-10 h-10 text-charcoal/40" strokeWidth={1.5} />
       </motion.div>
-
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-        className="text-gray-600"
-      >
-        We&apos;re sorry, but there are no products matching on{" "}
-        <span className="text-base font-semibold text-tech_dark_color">
-          {selectedTab}
-        </span>{" "}
-        criteria at the moment.
-      </motion.p>
 
       <motion.div
-        animate={{ scale: [1, 1.1, 1] }}
-        transition={{ repeat: Infinity, duration: 1.5 }}
-        className="flex items-center space-x-2 text-tech_orange"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.5 }}
       >
-        <Loader2 className="w-5 h-5 animate-spin" />
-        <span>We&apos;re restocking shortly</span>
+        <h2 className="text-3xl font-serif font-black text-charcoal mb-2">
+          Pantry is Empty
+        </h2>
+        
+        <p className="text-charcoal/60 font-sans text-lg max-w-md mx-auto leading-relaxed px-4">
+          We couldn't find any products in the{" "}
+          <span className="font-bold text-brandRed underline decoration-brandRed/30 decoration-2 underline-offset-4">
+            {selectedTab || "current"}
+          </span>{" "}
+          category right now.
+        </p>
       </motion.div>
 
-      <motion.p
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.4, duration: 0.5 }}
-        className="text-sm text-gray-500"
+        transition={{ delay: 0.3, duration: 0.5 }}
+        className="flex items-center gap-3 bg-brandRed/5 px-5 py-2.5 rounded-full border border-brandRed/10 text-brandRed font-sans font-semibold text-sm"
       >
-        Please check back later or explore our other product categories.
-      </motion.p>
+        <Loader2 className="w-4 h-4 animate-spin" />
+        <span>Restocking shortly...</span>
+      </motion.div>
     </div>
   );
 };
