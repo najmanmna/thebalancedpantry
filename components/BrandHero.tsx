@@ -3,30 +3,37 @@
 import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { ArrowDown, Heart, Sun, Smile, Wheat } from "lucide-react";
+import { ArrowDown, Heart, Sun, Smile, Wheat, LucideIcon } from "lucide-react";
 
-// Use your existing images
+// Images
 import pantryJar1 from "@/images/pantryJar1.png";
 import pantryFruit1 from "@/images/pantryFruit1.png";
 import pantryGrain1 from "@/images/pantryGrain1.png";
+
+// --- Constants ---
+// Optimization: Use a Data URI for noise instead of an external HTTP request (Zero Latency)
+const NOISE_PATTERN = `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E")`;
 
 export default function BrandHero() {
   return (
     <section className="relative w-full min-h-[90dvh] bg-cream flex flex-col justify-center items-center overflow-hidden">
       
       {/* --- 1. BACKGROUND TEXTURE & GRADIENTS --- */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Grain/Noise */}
-        <div className="absolute inset-0 opacity-[0.04] bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')] mix-blend-multiply"></div>
+      <div className="absolute inset-0 pointer-events-none select-none">
+        {/* Optimized Noise Layer */}
+        <div 
+            className="absolute inset-0 opacity-40 mix-blend-multiply"
+            style={{ backgroundImage: NOISE_PATTERN }}
+        ></div>
         
         {/* Warm Vignette */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(74,55,40,0.03)_100%)]"></div>
         
-        {/* Soft Spotlights */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] bg-[#FADADD]/20 blur-[100px] rounded-full"></div>
+        {/* Soft Spotlights (Will-change for performance) */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] bg-[#FADADD]/20 blur-[100px] rounded-full will-change-transform"></div>
       </div>
 
-      {/* --- 2. FLOATING ICON LAYER (The "Happy" Elements) --- */}
+      {/* --- 2. FLOATING ICON LAYER --- */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
          <FloatingIcon Icon={Sun} top="15%" left="10%" delay={0} size="w-24 h-24" opacity={0.08} />
          <FloatingIcon Icon={Heart} top="10%" right="12%" delay={1} size="w-20 h-20" opacity={0.1} />
@@ -34,20 +41,34 @@ export default function BrandHero() {
          <FloatingIcon Icon={Wheat} top="35%" right="8%" delay={1.5} size="w-28 h-28" opacity={0.08} rotate={15} />
       </div>
 
-      {/* --- 3. GROUNDED IMAGE COMPOSITION (The Pantry) --- */}
+      {/* --- 3. GROUNDED IMAGE COMPOSITION (Critical LCP Elements) --- */}
       <div className="absolute inset-0 pointer-events-none z-0">
         
         {/* Group Left: The Oats & Nuts */}
         <motion.div 
           initial={{ opacity: 0, x: -50, y: 50 }}
           animate={{ opacity: 1, x: 0, y: 0 }}
-          transition={{ duration: 1, delay: 0.5 }}
+          transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
           className="absolute bottom-[-5%] left-[-10%] sm:bottom-0 sm:left-0 w-[40%] sm:w-[20%] max-w-[300px]"
         >
-          <div className="relative aspect-square ">
-             <Image src={pantryGrain1} alt="Oats" fill className="object-contain" />
+          <div className="relative aspect-square">
+             <Image 
+                src={pantryGrain1} 
+                alt="Healthy Oats" 
+                fill 
+                sizes="(max-width: 768px) 40vw, 20vw"
+                className="object-contain"
+                priority // Load ASAP
+             />
              <div className="absolute bottom-[40%] -right-[20%] w-[70%] h-[70%] -z-10 opacity-80 blur-[1px]">
-                <Image src={pantryJar1} alt="Nuts" fill className="object-contain rotate-12" />
+                <Image 
+                    src={pantryJar1} 
+                    alt="Nuts Jar" 
+                    fill 
+                    sizes="(max-width: 768px) 30vw, 15vw"
+                    className="object-contain rotate-12"
+                    priority // Load ASAP
+                />
              </div>
           </div>
         </motion.div>
@@ -56,17 +77,24 @@ export default function BrandHero() {
         <motion.div 
           initial={{ opacity: 0, x: 50, y: 50 }}
           animate={{ opacity: 1, x: 0, y: 0 }}
-          transition={{ duration: 1, delay: 0.7 }}
+          transition={{ duration: 1, delay: 0.7, ease: "easeOut" }}
           className="absolute bottom-0 right-[-15%] sm:right-0 w-[50%] sm:w-[25%] max-w-[250px]"
         >
           <div className="relative aspect-square">
-             <Image src={pantryFruit1} alt="Mango" fill className="object-contain -rotate-12" />
+             <Image 
+                src={pantryFruit1} 
+                alt="Dried Mango" 
+                fill 
+                sizes="(max-width: 768px) 50vw, 25vw"
+                className="object-contain -rotate-12"
+                priority // Load ASAP
+             />
           </div>
         </motion.div>
 
       </div>
 
-      {/* --- 4. MAIN CONTENT (Typography) --- */}
+      {/* --- 4. MAIN CONTENT --- */}
       <div className="relative z-10 pt-20 px-4 sm:px-8 max-w-4xl mx-auto text-center">
         
         {/* Brand Stamp */}
@@ -126,21 +154,35 @@ export default function BrandHero() {
   );
 }
 
-// Sub-component for floating icons
-function FloatingIcon({ Icon, top, left, right, bottom, delay, size, opacity, rotate = 0 }: any) {
+// --- Sub-Components ---
+
+interface FloatingIconProps {
+    Icon: LucideIcon;
+    top?: string;
+    left?: string;
+    right?: string;
+    bottom?: string;
+    delay: number;
+    size: string;
+    opacity: number;
+    rotate?: number;
+}
+
+// Optimized with React.memo to prevent unnecessary re-renders during parent state changes
+const FloatingIcon = React.memo(function FloatingIcon({ Icon, top, left, right, bottom, delay, size, opacity, rotate = 0 }: FloatingIconProps) {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.5, y: 20 }}
         animate={{ 
             opacity: opacity, 
             scale: 1, 
-            y: [0, -15, 0], // The floating animation
+            y: [0, -15, 0], 
             rotate: rotate
         }}
         transition={{ 
           opacity: { duration: 1, delay },
           scale: { duration: 1, delay },
-          y: { duration: 6, repeat: Infinity, ease: "easeInOut", delay }, // Slow, continuous float
+          y: { duration: 6, repeat: Infinity, ease: "easeInOut", delay }, 
           rotate: { duration: 1 }
         }}
         className={`absolute text-charcoal ${size}`}
@@ -149,4 +191,4 @@ function FloatingIcon({ Icon, top, left, right, bottom, delay, size, opacity, ro
         <Icon className="w-full h-full" strokeWidth={1.5} />
       </motion.div>
     );
-  }
+});
