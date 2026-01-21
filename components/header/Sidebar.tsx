@@ -149,8 +149,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, categories }) => {
             <div className="p-6 border-t border-charcoal/5 bg-charcoal/5 flex-shrink-0">
               <div className="flex gap-4 mb-4">
                 <SocialIcon Icon={Instagram} />
-                <SocialIcon Icon={Facebook} />
-                <SocialIcon Icon={Mail} />
+                {/* <SocialIcon Icon={Facebook} />
+                <SocialIcon Icon={Mail} /> */}
               </div>
               <p className="text-xs text-charcoal/50 font-sans">
                 © 2026 The Balanced Pantry. <br />
@@ -166,7 +166,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, categories }) => {
 };
 
 const SocialIcon = ({ Icon }: { Icon: any }) => (
-  <a href="#" className="p-2 bg-white rounded-full text-charcoal hover:bg-brandRed hover:text-white transition-all shadow-sm">
+  <a href="https://www.instagram.com/the_balanced_pantry_lk?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener noreferrer" className="p-2 bg-white rounded-full text-charcoal hover:bg-brandRed hover:text-white transition-all shadow-sm">
     <Icon className="w-4 h-4" />
   </a>
 );

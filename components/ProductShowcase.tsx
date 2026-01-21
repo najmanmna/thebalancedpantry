@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Plus, Minus, ChevronDown, Leaf, Check, ShoppingBag } from "lucide-react";
-import toast from "react-hot-toast";
+import { Star, Minus, Plus, ChevronDown, ShieldCheck, Leaf, Check } from "lucide-react";
 import useCartStore from "@/store";
+import Loading from "@/components/Loading";
 import { urlFor } from "@/sanity/lib/image";
+import { toast } from "react-hot-toast";
 
 // --- Types ---
 interface Bundle {
@@ -14,305 +16,321 @@ interface Bundle {
   count: number;
   price: number;
   savings?: string;
+  tag?: string;
 }
 
-interface Nutrition {
-  servingSize: string;
-  calories: string;
-  sugar: string;
+interface NutritionFact {
+  label: string;
+  value: string;
+  highlight?: boolean;
 }
 
 interface Product {
   name: string;
+  subtitle?: string;
   description: string;
   badge?: string;
+  price: number;
   mainImage: any;
+  gallery?: any[];
   bundleOptions?: Bundle[];
   openingStock?: number;
   stockOut?: number;
-  nutrition?: Nutrition;
+  benefits?: string[];
+  nutritionFacts?: NutritionFact[]; // ✅ New Dynamic Array
 }
 
-// Default fallback
-const DEFAULT_BUNDLE: Bundle = { title: "Single Pack", count: 1, price: 0 };
+interface Props {
+  product: Product;
+}
 
-export default function ProductShowcase({ product }: { product: Product }) {
+export default function ProductClient({ product }: Props) {
+  const router = useRouter();
   const addItem = useCartStore((state) => state.addItem);
   
-  // --- State ---
-  // Default to 2nd option (popular) if available, else 1st
+  // --- IMAGES STATE ---
+  const allImages = [product.mainImage, ...(product.gallery || [])].filter(Boolean);
+  const [selectedImage, setSelectedImage] = useState(allImages[0]);
+
+  // --- BUNDLE STATE ---
   const [selectedBundle, setSelectedBundle] = useState<Bundle>(
-    product?.bundleOptions?.[1] || product?.bundleOptions?.[0] || DEFAULT_BUNDLE
+    product.bundleOptions?.[0] || { 
+      title: "Single Pack", 
+      count: 1, 
+      price: product.price, 
+      tag: "Standard" 
+    }
   );
+
   const [qty, setQty] = useState(1);
-  const [isAdded, setIsAdded] = useState(false); // Local UI state for button feedback
+  const [isBuying, setIsBuying] = useState(false);
 
-  // --- Derived State (Stock) ---
-  const { isOutOfStock, maxQty } = useMemo(() => {
-    const opening = product?.openingStock ?? 0;
-    const out = product?.stockOut ?? 0;
-    const available = Math.max(0, opening - out);
-    
-    return {
-      isOutOfStock: available <= 0,
-      // Prevent division by zero if bundle.count is missing
-      maxQty: selectedBundle.count > 0 ? Math.floor(available / selectedBundle.count) : 0
-    };
-  }, [product, selectedBundle]);
+  // --- STOCK LOGIC ---
+  const openingStock = product?.openingStock ?? 0;
+  const stockOut = product?.stockOut ?? 0;
+  const availableStock = openingStock - stockOut;
+  const isOutOfStock = availableStock <= 0;
+  const maxQty = selectedBundle.count > 0 ? Math.floor(availableStock / selectedBundle.count) : 0;
 
-  // Reset qty when bundle changes
   useEffect(() => {
     setQty(1);
   }, [selectedBundle]);
 
-  // --- Handlers ---
-  const handleAddToCart = useCallback(() => {
+  const handleAddToCart = () => {
     if (isOutOfStock) return;
-
     addItem(product, qty, selectedBundle);
-    
-    // Trigger visual feedback
-    setIsAdded(true);
-    setTimeout(() => setIsAdded(false), 2000);
-  }, [addItem, isOutOfStock, product, qty, selectedBundle]);
+    toast.success("Added to Pantry!");
+  };
 
-  if (!product) return null;
+  const handleBuyNow = () => {
+    if (isOutOfStock) return;
+    setIsBuying(true);
+    addItem(product, qty, selectedBundle);
+    setTimeout(() => router.push("/cart"), 500);
+  };
 
   return (
-    <section id="shop" className="py-24 bg-white relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-        
-        {/* --- LEFT: PRODUCT IMAGE (Memoized) --- */}
-        <ProductImageWrapper product={product} />
+    <>
+      {isBuying && <Loading />}
+      
+      <div className="bg-cream min-h-screen py-12 sm:py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
 
-        {/* --- RIGHT: THE OFFER --- */}
-        <div>
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex text-brandRed">
-                {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
+          {/* --- LEFT: GALLERY & MAIN IMAGE --- */}
+          <div className="relative lg:sticky lg:top-24 flex flex-col-reverse sm:flex-row gap-4 h-auto sm:h-[600px] z-10">
+              
+              {/* 1. Vertical Thumbnails */}
+              {allImages.length > 1 && (
+                <div className="flex sm:flex-col gap-3 overflow-x-auto sm:overflow-y-auto sm:w-24 scrollbar-hide py-2 sm:py-0">
+                  {allImages.map((img: any, i: number) => (
+                    <button
+                      key={i}
+                      onClick={() => setSelectedImage(img)}
+                      className={`relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 transition-all overflow-hidden ${
+                        selectedImage === img 
+                          ? "border-brandRed opacity-100 ring-2 ring-brandRed/20" 
+                          : "border-charcoal/10 opacity-60 hover:opacity-100 hover:border-charcoal/30"
+                      }`}
+                    >
+                      <Image 
+                        src={urlFor(img).width(200).height(200).url()} 
+                        alt={`View ${i}`} 
+                        fill 
+                        className="object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* 2. Main Large Image */}
+              <div className="flex-1 bg-[#F3EFE0] rounded-[3rem] p-8 border border-charcoal/5 relative overflow-hidden group h-[400px] sm:h-full flex items-center justify-center">
+                 <div className="absolute inset-0 border-[3px] border-charcoal/5 rounded-[2.5rem] m-4 pointer-events-none"></div>
+                 
+                 {product.badge && (
+                   <div className="absolute top-8 left-8 bg-brandRed text-cream font-sans font-bold text-xs uppercase tracking-widest px-3 py-1.5 rounded-full z-10 shadow-sm">
+                     {product.badge}
+                   </div>
+                 )}
+                 
+                 <div className="relative w-full h-full p-4">
+                   <AnimatePresence mode="wait">
+                     {selectedImage && (
+                       <motion.div
+                         key={selectedImage._key || selectedImage.asset?._ref} 
+                         initial={{ opacity: 0, scale: 0.95 }}
+                         animate={{ opacity: 1, scale: 1 }}
+                         exit={{ opacity: 0 }}
+                         transition={{ duration: 0.3 }}
+                         className="relative w-full h-full"
+                       >
+                         <Image
+                           src={urlFor(selectedImage).width(800).url()}
+                           alt={product.name}
+                           fill
+                           className="object-contain drop-shadow-2xl"
+                           priority
+                           sizes="(max-width: 768px) 100vw, 50vw"
+                         />
+                       </motion.div>
+                     )}
+                   </AnimatePresence>
+                 </div>
               </div>
-              <span className="text-xs font-bold font-sans text-charcoal/60 tracking-wider uppercase">
-                Best Seller
-              </span>
-            </div>
-            <h2 className="font-serif text-5xl font-black text-charcoal mb-2 leading-none">
-              {product.name}
-            </h2>
-            <p className="font-sans text-charcoal/70 text-lg leading-relaxed mt-4">
-              {product.description}
-            </p>
           </div>
 
-          {/* Bundle Selector */}
-          <div className="mb-10">
-            <div className="flex justify-between items-baseline mb-4">
-               <label className="block font-sans text-xs font-bold uppercase tracking-widest text-charcoal/40">
-                 Select Quantity
-               </label>
-               {isOutOfStock && <span className="text-red-500 font-bold text-sm animate-pulse">Out of Stock</span>}
-            </div>
+          {/* --- RIGHT: CONTENT --- */}
+          <div className="flex flex-col gap-8">
             
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {product.bundleOptions?.map((bundle, i) => (
-                <button
-                  key={i}
-                  onClick={() => setSelectedBundle(bundle)}
-                  disabled={isOutOfStock}
-                  className={`relative p-4 rounded-xl border-2 text-left transition-all duration-200 group ${
-                    selectedBundle.title === bundle.title
-                      ? "border-brandRed bg-brandRed/5 shadow-[4px_4px_0px_0px_#D64545]"
-                      : "border-charcoal/10 bg-white hover:border-charcoal/30"
-                  } ${isOutOfStock ? "opacity-50 cursor-not-allowed grayscale" : ""}`}
-                >
-                  {bundle.savings && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-charcoal text-white text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap z-10">
-                      {bundle.savings}
-                    </span>
-                  )}
-                  <div className="font-serif font-bold text-charcoal text-lg">{bundle.count} Pack</div>
-                  <div className="font-sans text-sm text-charcoal/60 group-hover:text-charcoal transition-colors">
-                    Rs. {bundle.price.toLocaleString()}
+            {/* Header */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex text-brandRed">
+                  {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
+                </div>
+                <span className="text-xs font-bold font-sans text-charcoal/60 tracking-wider uppercase">48 Reviews</span>
+              </div>
+              
+              <h1 className="font-serif text-5xl sm:text-6xl font-black text-charcoal mb-2 leading-[0.9]">
+                {product.name}
+              </h1>
+              
+              {product.subtitle && (
+                <p className="font-serif italic text-2xl text-charcoal/60 font-light mb-6">
+                  {product.subtitle}
+                </p>
+              )}
+
+              <p className="font-sans text-charcoal/70 text-base sm:text-lg leading-relaxed border-l-2 border-brandRed pl-6">
+                {product.description}
+              </p>
+            </div>
+
+            {/* Benefits */}
+            {product.benefits && (
+              <div className="flex flex-wrap gap-4 sm:gap-6 py-6 border-y border-charcoal/10">
+                {product.benefits.map((benefit: string, i: number) => (
+                  <div key={i} className="flex items-center gap-2 opacity-80">
+                    <ShieldCheck className="w-4 h-4 text-brandRed" />
+                    <span className="font-sans text-xs font-bold text-charcoal uppercase tracking-wider">{benefit}</span>
                   </div>
-                </button>
-              ))}
-            </div>
-          </div>
+                ))}
+              </div>
+            )}
 
-          {/* Action Area */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6 mb-10 pb-10 border-b border-charcoal/10">
-            
-            {/* Quantity Counter */}
-            <div className="flex items-center justify-between sm:justify-start gap-4 bg-[#F3EFE0] px-4 py-3 rounded-full border border-charcoal/10">
-              <button 
-                onClick={() => setQty(q => Math.max(1, q - 1))} 
-                disabled={isOutOfStock || qty <= 1}
-                className="p-1 hover:bg-black/5 rounded-full disabled:opacity-30 transition-colors"
-                aria-label="Decrease quantity"
-              >
-                <Minus className="w-4 h-4 text-charcoal" />
-              </button>
-              <span className="font-serif font-bold text-xl text-charcoal w-6 text-center tabular-nums">{qty}</span>
-              <button 
-                onClick={() => {
-                   if (qty < maxQty) setQty(q => q + 1);
-                   else toast.error(`Max stock reached!`);
-                }} 
-                disabled={isOutOfStock || qty >= maxQty}
-                className="p-1 hover:bg-black/5 rounded-full disabled:opacity-30 transition-colors"
-                aria-label="Increase quantity"
-              >
-                <Plus className="w-4 h-4 text-charcoal" />
-              </button>
-            </div>
+            {/* Bundle Selector */}
+            <div>
+              <div className="flex justify-between items-baseline mb-4">
+                 <label className="font-sans text-xs font-bold uppercase tracking-widest text-charcoal/40">Select Bundle</label>
+                 {isOutOfStock && <span className="text-red-500 font-bold text-sm">Out of Stock</span>}
+              </div>
 
-            {/* Add To Cart Button (With Success State) */}
-            <button 
-              onClick={handleAddToCart}
-              disabled={isOutOfStock || isAdded}
-              className={`flex-1 font-serif font-bold text-xl px-8 py-4 rounded-full border-2 border-charcoal shadow-[4px_4px_0px_0px_#4A3728] transition-all flex items-center justify-center gap-3 w-full sm:w-auto relative overflow-hidden
-                ${isOutOfStock 
-                   ? "bg-gray-200 text-gray-400 cursor-not-allowed border-gray-300 shadow-none" 
-                   : isAdded 
-                     ? "bg-green-600 text-white border-green-800 shadow-[2px_2px_0px_0px_#14532d]" 
-                     : "bg-brandRed text-cream hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_#4A3728]"
-                }
-              `}
-            >
-              <AnimatePresence mode="wait">
-                {isAdded ? (
-                  <motion.div 
-                    key="success"
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -20, opacity: 0 }}
-                    className="flex items-center gap-2"
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {product.bundleOptions?.map((bundle: any, i: number) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedBundle(bundle)}
+                    disabled={isOutOfStock}
+                    className={`relative p-4 rounded-xl border-2 text-left transition-all duration-200 ${
+                      selectedBundle.title === bundle.title
+                        ? "border-brandRed bg-brandRed/5 shadow-[4px_4px_0px_0px_#D64545]"
+                        : "border-charcoal/10 bg-white hover:border-charcoal/30"
+                    } ${isOutOfStock ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
-                    <Check className="w-6 h-6" />
-                    <span>Added!</span>
-                  </motion.div>
-                ) : (
-                  <motion.div 
-                    key="default"
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -20, opacity: 0 }}
-                    className="flex items-center gap-2 w-full justify-center"
-                  >
-                    <span>{isOutOfStock ? "Sold Out" : "Add to Cart"}</span>
-                    {!isOutOfStock && (
-                      <span className="bg-black/20 px-2 py-0.5 rounded text-base font-medium">
-                          Rs. {(selectedBundle.price * qty).toLocaleString()}
+                    {bundle.savings && (
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-charcoal text-white text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+                        {bundle.savings}
                       </span>
                     )}
-                  </motion.div>
+                    <div className="font-serif font-bold text-charcoal text-lg">{bundle.count} Pack</div>
+                    <div className="font-sans text-sm text-charcoal/60">Rs. {bundle.price}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row items-stretch gap-4">
+              <div className="flex items-center justify-between sm:justify-center gap-4 bg-white px-6 py-4 rounded-full border border-charcoal/10">
+                <button 
+                  onClick={() => setQty(q => Math.max(1, q - 1))} 
+                  disabled={isOutOfStock || qty <= 1}
+                  className="p-1 hover:bg-black/5 rounded-full transition-colors disabled:opacity-30"
+                >
+                  <Minus className="w-4 h-4 text-charcoal" />
+                </button>
+                <span className="font-serif font-bold text-xl text-charcoal w-6 text-center">{qty}</span>
+                <button 
+                  onClick={() => {
+                      if (qty < maxQty) setQty(q => q + 1);
+                      else toast.error(`Only ${maxQty} packs available!`);
+                  }} 
+                  disabled={isOutOfStock || qty >= maxQty}
+                  className="p-1 hover:bg-black/5 rounded-full transition-colors disabled:opacity-30"
+                >
+                  <Plus className="w-4 h-4 text-charcoal" />
+                </button>
+              </div>
+
+              <button 
+                onClick={handleAddToCart}
+                disabled={isOutOfStock}
+                className={`flex-1 font-serif font-bold text-xl px-8 py-4 rounded-full border-2 border-charcoal shadow-[4px_4px_0px_0px_#4A3728] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_#4A3728] transition-all flex items-center justify-center gap-3
+                  ${isOutOfStock ? "bg-gray-300 text-gray-500 cursor-not-allowed border-gray-400 shadow-none" : "bg-brandRed text-cream"}
+                `}
+              >
+                {isOutOfStock ? "Sold Out" : "Add to Cart"}
+                {!isOutOfStock && (
+                  <span className="bg-black/20 px-2 py-0.5 rounded text-base">
+                    Rs. {(selectedBundle.price * qty).toLocaleString()}
+                  </span>
                 )}
-              </AnimatePresence>
-            </button>
+              </button>
+            </div>
+
+            {/* Nutrition Accordion (Dynamic) */}
+            <NutritionAccordion nutritionFacts={product.nutritionFacts} />
+
           </div>
-
-          {/* Nutrition Info (Memoized) */}
-          <NutritionAccordion nutrition={product.nutrition} />
-
         </div>
       </div>
-    </section>
+    </>
   );
 }
 
-// --- Sub-Components (Prevent Re-renders) ---
-
-const ProductImageWrapper = React.memo(function ProductImageWrapper({ product }: { product: Product }) {
-  // Optimization: Request specific dimensions (800x800) and WebP format
-  const imageUrl = product.mainImage 
-    ? urlFor(product.mainImage).width(600).height(600).fit('crop').auto('format').url() 
-    : null;
-
-  return (
-    <div className="relative bg-[#F3EFE0] rounded-[3rem] p-8 sm:p-12 flex items-center justify-center min-h-[400px] sm:min-h-[500px] border border-charcoal/5 group">
-      {/* Background Decor */}
-      <div className="absolute inset-0 border-[3px] border-charcoal/5 rounded-[2.5rem] m-4 pointer-events-none"></div>
-      
-      {/* POUCH MOCKUP */}
-      <motion.div 
-        initial={{ scale: 0.9, opacity: 0 }}
-        whileInView={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.8 }}
-        className="relative w-full h-[350px] sm:h-[450px] drop-shadow-2xl"
-      >
-        {imageUrl && (
-          <Image 
-            src={imageUrl} 
-            alt={product.name}
-            fill 
-            // Optimization: Load smaller images on mobile
-            sizes="(max-width: 768px) 100vw, 30vw"
-            className="object-contain"
-            priority // Load ASAP as this is the main product image
-          />
-        )}
-      </motion.div>
-
-      {/* "Natural" Badge */}
-      {product.badge && (
-        <div className="absolute top-8 left-8 bg-charcoal text-cream font-serif font-bold px-4 py-2 rounded-full text-sm z-10">
-          {product.badge}
-        </div>
-      )}
-    </div>
-  );
-});
-
-const NutritionAccordion = React.memo(function NutritionAccordion({ nutrition }: { nutrition?: Nutrition }) {
+// --- SUB-COMPONENT: Nutrition Accordion ---
+// Moved outside so it doesn't re-render and lose state when parent updates
+const NutritionAccordion = React.memo(function NutritionAccordion({ nutritionFacts }: { nutritionFacts?: NutritionFact[] }) {
   const [isOpen, setIsOpen] = useState(false);
 
-  if (!nutrition) return null;
+  // Guard Clause: If no data added in Sanity, hide the whole section
+  if (!nutritionFacts || nutritionFacts.length === 0) return null;
 
   return (
-    <div className="border border-charcoal/10 rounded-2xl overflow-hidden">
-        <button 
-          onClick={() => setIsOpen(!isOpen)}
-          className="w-full flex items-center justify-between p-4 bg-[#F9F7F2] hover:bg-[#F3EFE0] transition-colors"
-        >
+    <div className="border border-charcoal/10 rounded-2xl overflow-hidden mt-6">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-4 bg-[#F9F7F2] hover:bg-[#F3EFE0] transition-colors"
+      >
         <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-charcoal/5 flex items-center justify-center">
-            <Leaf className="w-4 h-4 text-charcoal/60" />
-            </div>
-            <span className="font-serif font-bold text-charcoal">Nutrition Facts</span>
+          <div className="w-8 h-8 rounded-full bg-charcoal/5 flex items-center justify-center">
+             <Leaf className="w-4 h-4 text-charcoal/60" />
+          </div>
+          <span className="font-serif font-bold text-charcoal">Nutrition Facts</span>
         </div>
         <ChevronDown className={`w-5 h-5 text-charcoal transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
-        </button>
-        <AnimatePresence initial={false}>
+      </button>
+
+      <AnimatePresence initial={false}>
         {isOpen && (
-            <motion.div
+          <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
             className="overflow-hidden"
-            >
+          >
             <div className="p-6 bg-white text-sm font-sans text-charcoal/80 space-y-2 border-t border-charcoal/5">
-                <div className="flex justify-between border-b border-dashed border-charcoal/20 pb-2">
-                    <span>Serving Size</span>
-                    <span className="font-bold">{nutrition.servingSize}</span>
+              
+              {/* DYNAMIC MAPPING START */}
+              {nutritionFacts.map((fact, index) => (
+                <div 
+                  key={index} 
+                  className={`flex justify-between pb-2 ${
+                    index !== nutritionFacts.length - 1 ? 'border-b border-dashed border-charcoal/20' : ''
+                  }`}
+                >
+                  <span>{fact.label}</span>
+                  <span className={`font-bold ${fact.highlight ? "text-brandRed" : "text-charcoal"}`}>
+                    {fact.value}
+                  </span>
                 </div>
-                <div className="flex justify-between border-b border-dashed border-charcoal/20 pb-2">
-                    <span>Calories</span>
-                    <span className="font-bold">{nutrition.calories}</span>
-                </div>
-                <div className="flex justify-between border-b border-dashed border-charcoal/20 pb-2">
-                    <span>Sugars (Natural)</span>
-                    <span className="font-bold">{nutrition.sugar}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span>Added Sugar</span>
-                    <span className="font-bold text-brandRed">&lt; 1g (3%)</span>
-                </div>
+              ))}
+              {/* DYNAMIC MAPPING END */}
+
             </div>
-            </motion.div>
+          </motion.div>
         )}
-        </AnimatePresence>
+      </AnimatePresence>
     </div>
   );
 });

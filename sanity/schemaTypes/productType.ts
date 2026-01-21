@@ -131,17 +131,43 @@ export const productType = defineType({
       description: "Short phrases like 'Flash Frozen', 'No Preservatives', 'Gluten Free'",
     }),
     defineField({
-      name: "nutrition",
-      title: "Nutrition Facts",
-      type: "object",
-      fieldset: "nutrition",
-      fields: [
-        { name: "servingSize", type: "string", title: "Serving Size" },
-        { name: "calories", type: "string", title: "Calories" },
-        { name: "sugar", type: "string", title: "Total Sugar" },
-        { name: "protein", type: "string", title: "Protein" },
-        { name: "fat", type: "string", title: "Total Fat" },
-      ],
+      name: 'nutritionFacts', // Changed name to indicate it's a list
+      title: 'Nutrition Facts',
+      type: 'array',
+      of: [
+        {
+          type: 'object',
+          name: 'nutrient',
+          title: 'Nutrient',
+          fields: [
+            { 
+              name: 'label', 
+              title: 'Label', 
+              type: 'string', 
+              description: 'e.g. Calories, Protein, Added Sugar' 
+            },
+            { 
+              name: 'value', 
+              title: 'Value', 
+              type: 'string', 
+              description: 'e.g. 110, 5g, < 1g' 
+            },
+            {
+              name: 'highlight',
+              title: 'Highlight Color?',
+              type: 'boolean',
+              description: 'If true, this value will show in Red/Brand Color',
+              initialValue: false
+            }
+          ],
+          preview: {
+            select: {
+              title: 'label',
+              subtitle: 'value'
+            }
+          }
+        }
+      ]
     }),
     
     // --- 6. CATEGORIZATION ---

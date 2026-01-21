@@ -26,9 +26,9 @@ export default function Footer() {
               We bring you wholesome, low-calorie products made with honest, nourishing ingredients to Sri Lanka.
             </p>
             <div className="flex gap-4">
-              <SocialBtn icon={Instagram} href="#" />
-              <SocialBtn icon={Facebook} href="#" />
-              <SocialBtn icon={Twitter} href="#" />
+              <SocialBtn icon={Instagram}  href="https://www.instagram.com/the_balanced_pantry_lk?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="/>
+              {/* <SocialBtn icon={Facebook} href="#" /> */}
+              {/* <SocialBtn icon={Twitter} href="#" /> */}
             </div>
           </div>
 
@@ -37,7 +37,7 @@ export default function Footer() {
             <h4 className="font-serif font-bold text-lg mb-6">Shop</h4>
             <ul className="space-y-4 font-sans text-[#F3EFE0]/60 text-sm">
               <li><Link href="/shop" className="hover:text-brandRed transition-colors">Strawberries</Link></li>
-              <li><Link href="#" className="hover:text-brandRed transition-colors">Durian (Coming Soon)</Link></li>
+              <li><Link href="/shop" className="hover:text-brandRed transition-colors">Durian (Coming Soon)</Link></li>
             </ul>
           </div>
 
@@ -103,6 +103,8 @@ function SocialBtn({ icon: Icon, href }: { icon: any, href: string }) {
   return (
     <a 
       href={href} 
+      target="_blank"
+      rel="noopener noreferrer"
       className="w-10 h-10 rounded-full border border-[#F3EFE0]/10 flex items-center justify-center hover:bg-brandRed hover:border-brandRed hover:text-white transition-all text-[#F3EFE0]/60"
     >
       <Icon className="w-4 h-4" />

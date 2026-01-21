@@ -229,13 +229,11 @@ const PRODUCT_BY_SLUG_QUERY = defineQuery(`
     benefits, // The "Trust Stamps" array
 
     // 🔹 Health Data
-    nutrition {
-      servingSize,
-      calories,
-      sugar,
-      protein,
-      fat
-    },
+    nutritionFacts[] {
+  label,
+  value,
+  highlight
+},
 
     categories[]->{
       _id,

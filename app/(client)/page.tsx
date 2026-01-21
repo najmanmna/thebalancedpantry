@@ -48,13 +48,11 @@ async function getHeroProduct() {
     benefits, // The "Trust Stamps" array
 
     // 🔹 Health Data
-    nutrition {
-      servingSize,
-      calories,
-      sugar,
-      protein,
-      fat
-    },
+   nutritionFacts[] {
+  label,
+  value,
+  highlight
+},
 
     categories[]->{
       _id,

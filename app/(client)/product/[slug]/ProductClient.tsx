@@ -4,12 +4,11 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Minus, Plus, ChevronDown, Check, ShieldCheck, Leaf } from "lucide-react";
+import { Star, Minus, Plus, ChevronDown, ShieldCheck, Leaf } from "lucide-react";
 import useCartStore from "@/store";
 import Loading from "@/components/Loading";
 import { urlFor } from "@/sanity/lib/image";
 import { toast } from "react-hot-toast";
-import ProductFAQ from "@/components/ProductFAQ";
 
 interface Props {
   product: any;
@@ -32,16 +31,17 @@ export default function ProductClient({ product }: Props) {
       tag: "Standard" 
     }
   );
-  
+
   const [qty, setQty] = useState(1);
   const [isBuying, setIsBuying] = useState(false);
-  const [isNutritionOpen, setIsNutritionOpen] = useState(false);
 
   // --- STOCK LOGIC ---
   const openingStock = product?.openingStock ?? 0;
   const stockOut = product?.stockOut ?? 0;
   const availableStock = openingStock - stockOut;
   const isOutOfStock = availableStock <= 0;
+  
+  // Prevent division by zero if bundle count is missing
   const maxQty = selectedBundle.count > 0 ? Math.floor(availableStock / selectedBundle.count) : 0;
 
   useEffect(() => {
@@ -69,67 +69,65 @@ export default function ProductClient({ product }: Props) {
         <div className="max-w-7xl mx-auto px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
 
           {/* --- LEFT: GALLERY & MAIN IMAGE --- */}
-          {/* FIXED: Changed 'sticky' to 'relative lg:sticky'. 
-             Now it scrolls naturally on mobile but sticks on desktop.
-          */}
           <div className="relative lg:sticky lg:top-24 flex flex-col-reverse sm:flex-row gap-4 h-auto sm:h-[600px] z-10">
               
-             {/* 1. Vertical Thumbnails */}
-             {allImages.length > 1 && (
-               <div className="flex sm:flex-col gap-3 overflow-x-auto sm:overflow-y-auto sm:w-24 scrollbar-hide py-2 sm:py-0">
-                 {allImages.map((img: any, i: number) => (
-                   <button
-                     key={i}
-                     onClick={() => setSelectedImage(img)}
-                     className={`relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 transition-all overflow-hidden ${
-                       selectedImage === img 
-                         ? "border-brandRed opacity-100 ring-2 ring-brandRed/20" 
-                         : "border-charcoal/10 opacity-60 hover:opacity-100 hover:border-charcoal/30"
-                     }`}
-                   >
-                     <Image 
-                       src={urlFor(img).url()} 
-                       alt={`View ${i}`} 
-                       fill 
-                       className="object-cover"
-                     />
-                   </button>
-                 ))}
-               </div>
-             )}
-
-             {/* 2. Main Large Image */}
-             <div className="flex-1 bg-[#F3EFE0] rounded-[3rem] p-8 border border-charcoal/5 relative overflow-hidden group h-[400px] sm:h-full flex items-center justify-center">
-                <div className="absolute inset-0 border-[3px] border-charcoal/5 rounded-[2.5rem] m-4 pointer-events-none"></div>
-                
-                {product.badge && (
-                  <div className="absolute top-8 left-8 bg-brandRed text-cream font-sans font-bold text-xs uppercase tracking-widest px-3 py-1.5 rounded-full z-10 shadow-sm">
-                    {product.badge}
-                  </div>
-                )}
-                
-                <div className="relative w-full h-full p-4">
-                  <AnimatePresence mode="wait">
-                    {selectedImage && (
-                      <motion.div
-                        key={selectedImage._key || selectedImage.asset?._ref} 
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="relative w-full h-full"
-                      >
-                        <Image
-                          src={urlFor(selectedImage).url()}
-                          alt={product.name}
-                          fill
-                          className="object-contain drop-shadow-2xl"
-                        />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+              {/* 1. Vertical Thumbnails */}
+              {allImages.length > 1 && (
+                <div className="flex sm:flex-col gap-3 overflow-x-auto sm:overflow-y-auto sm:w-24 scrollbar-hide py-2 sm:py-0">
+                  {allImages.map((img: any, i: number) => (
+                    <button
+                      key={i}
+                      onClick={() => setSelectedImage(img)}
+                      className={`relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 transition-all overflow-hidden ${
+                        selectedImage === img 
+                          ? "border-brandRed opacity-100 ring-2 ring-brandRed/20" 
+                          : "border-charcoal/10 opacity-60 hover:opacity-100 hover:border-charcoal/30"
+                      }`}
+                    >
+                      <Image 
+                        src={urlFor(img).width(200).url()} 
+                        alt={`View ${i}`} 
+                        fill 
+                        className="object-cover"
+                      />
+                    </button>
+                  ))}
                 </div>
-             </div>
+              )}
+
+              {/* 2. Main Large Image */}
+              <div className="flex-1 bg-[#F3EFE0] rounded-[3rem] p-8 border border-charcoal/5 relative overflow-hidden group h-[400px] sm:h-full flex items-center justify-center">
+                 <div className="absolute inset-0 border-[3px] border-charcoal/5 rounded-[2.5rem] m-4 pointer-events-none"></div>
+                 
+                 {product.badge && (
+                   <div className="absolute top-8 left-8 bg-brandRed text-cream font-sans font-bold text-xs uppercase tracking-widest px-3 py-1.5 rounded-full z-10 shadow-sm">
+                     {product.badge}
+                   </div>
+                 )}
+                 
+                 <div className="relative w-full h-full p-4">
+                   <AnimatePresence mode="wait">
+                     {selectedImage && (
+                       <motion.div
+                         key={selectedImage._key || selectedImage.asset?._ref} 
+                         initial={{ opacity: 0, scale: 0.95 }}
+                         animate={{ opacity: 1, scale: 1 }}
+                         exit={{ opacity: 0 }}
+                         transition={{ duration: 0.3 }}
+                         className="relative w-full h-full"
+                       >
+                         <Image
+                           src={urlFor(selectedImage).width(800).url()}
+                           alt={product.name}
+                           fill
+                           className="object-contain drop-shadow-2xl"
+                           priority
+                         />
+                       </motion.div>
+                     )}
+                   </AnimatePresence>
+                 </div>
+              </div>
           </div>
 
           {/* --- RIGHT: CONTENT --- */}
@@ -241,55 +239,8 @@ export default function ProductClient({ product }: Props) {
               </button>
             </div>
 
-            {/* Nutrition Accordion */}
-            {product.nutrition && (
-              <div className="border border-charcoal/10 rounded-2xl overflow-hidden mt-4 bg-white">
-                <button 
-                  onClick={() => setIsNutritionOpen(!isNutritionOpen)}
-                  className="w-full flex items-center justify-between p-4 bg-[#F9F7F2] hover:bg-[#F3EFE0] transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-charcoal/5 flex items-center justify-center">
-                      <Leaf className="w-4 h-4 text-charcoal/60" />
-                    </div>
-                    <span className="font-serif font-bold text-charcoal">Nutrition Facts</span>
-                  </div>
-                  <ChevronDown className={`w-5 h-5 text-charcoal transition-transform ${isNutritionOpen ? "rotate-180" : ""}`} />
-                </button>
-                <AnimatePresence>
-                  {isNutritionOpen && (
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: "auto" }}
-                      exit={{ height: 0 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="p-6 text-sm font-sans text-charcoal/80 space-y-2 border-t border-charcoal/5">
-                        <div className="flex justify-between border-b border-dashed border-charcoal/20 pb-2">
-                          <span>Serving Size</span>
-                          <span className="font-bold">{product.nutrition.servingSize}</span>
-                        </div>
-                        <div className="flex justify-between border-b border-dashed border-charcoal/20 pb-2">
-                          <span>Calories</span>
-                          <span className="font-bold">{product.nutrition.calories}</span>
-                        </div>
-                        <div className="flex justify-between border-b border-dashed border-charcoal/20 pb-2">
-                          <span>Natural Sugar</span>
-                          <span className="font-bold">{product.nutrition.sugar}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Added Sugar</span>
-                          <span className="font-bold text-brandRed">&lt; 1g (3%)</span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
-
-
-            <ProductFAQ faqs={product.faq} />
+            {/* Nutrition Accordion (Updated Dynamic Version) */}
+            <NutritionAccordion nutritionFacts={product.nutritionFacts} />
 
           </div>
         </div>
@@ -297,3 +248,60 @@ export default function ProductClient({ product }: Props) {
     </>
   );
 }
+
+// --- SUB-COMPONENT: Nutrition Accordion ---
+// Defined outside to prevent re-renders and mess
+const NutritionAccordion = React.memo(function NutritionAccordion({ nutritionFacts }: { nutritionFacts?: any[] }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Guard Clause: If no data added in Sanity, hide the whole section
+  if (!nutritionFacts || nutritionFacts.length === 0) return null;
+
+  return (
+    <div className="border border-charcoal/10 rounded-2xl overflow-hidden mt-6">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-4 bg-[#F9F7F2] hover:bg-[#F3EFE0] transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-charcoal/5 flex items-center justify-center">
+             <Leaf className="w-4 h-4 text-charcoal/60" />
+          </div>
+          <span className="font-serif font-bold text-charcoal">Nutrition Facts</span>
+        </div>
+        <ChevronDown className={`w-5 h-5 text-charcoal transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="p-6 bg-white text-sm font-sans text-charcoal/80 space-y-2 border-t border-charcoal/5">
+              
+              {/* DYNAMIC MAPPING START */}
+              {nutritionFacts.map((fact, index) => (
+                <div 
+                  key={index} 
+                  className={`flex justify-between pb-2 ${
+                    index !== nutritionFacts.length - 1 ? 'border-b border-dashed border-charcoal/20' : ''
+                  }`}
+                >
+                  <span>{fact.label}</span>
+                  <span className={`font-bold ${fact.highlight ? "text-brandRed" : "text-charcoal"}`}>
+                    {fact.value}
+                  </span>
+                </div>
+              ))}
+              {/* DYNAMIC MAPPING END */}
+
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+});
