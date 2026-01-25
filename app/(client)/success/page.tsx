@@ -58,9 +58,9 @@ const SuccessPage = () => {
 
   if (!validAccess) return null;
 
-  const bankDetails = `M/s Elvyn (Private) Limited
-001010177892
-Hatton National Bank Aluthkade`;
+  const bankDetails = `F A Uwais
+005212035096
+Nations Trust Bank Wellawatte Branch`;
 
   const copyBankDetails = async () => {
     await navigator.clipboard.writeText(bankDetails);

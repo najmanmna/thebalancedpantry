@@ -91,12 +91,15 @@ export default function StrawberrySpotlight({ product }: { product: ProductProps
 
             {/* Buttons */}
             <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-              <Link href="#shop" className="w-full sm:w-auto" aria-label={`Shop ${product.name}`}>
+                  {product.slug?.current && (
+              <Link href={`/product/${product.slug.current}`} className="w-full sm:w-auto" aria-label={`Shop ${product.name}`}>
                 <button className="w-full sm:w-auto bg-brandRed text-cream font-serif font-bold text-lg px-8 py-3 rounded-full border-2 border-charcoal shadow-[4px_4px_0px_0px_#4A3728] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_#4A3728] transition-all flex items-center justify-center gap-2">
                   Shop Now
                   <ArrowRight className="w-5 h-5" />
                 </button>
               </Link>
+                )}
+          
               
               {product.slug?.current && (
                 <Link 
@@ -142,7 +145,7 @@ export default function StrawberrySpotlight({ product }: { product: ProductProps
                  rotate: 2,
                  transition: { duration: 0.3 }
                }}
-               className="relative w-full aspect-[4/5] max-w-md sm:max-w-lg lg:max-w-xl cursor-pointer"
+               className="relative w-full aspect-[4/5] max-w-md sm:max-w-lg lg:max-w-xl cursor-pointer "
             >
                {imageUrl && (
                  <Image 
@@ -151,8 +154,9 @@ export default function StrawberrySpotlight({ product }: { product: ProductProps
                    fill
                    // 2. OPTIMIZATION: Critical 'sizes' prop
                    // Mobile: 100% width, Tablet: 50%, Desktop: ~600px
-                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
+                   sizes="(max-width: 768px) 90vw, (max-width: 1200px) 40vw, 600px"
                    className="object-contain drop-shadow-2xl"
+                 
                    priority={true} // Change to TRUE if this component is "above the fold"
                  />
                )}

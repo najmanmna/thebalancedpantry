@@ -22,10 +22,10 @@ const COLORS = {
 };
 
 const BANK_DETAILS = `
-  <strong>Bank:</strong> Hatton National Bank (HNB)<br/>
-  <strong>Branch:</strong> XXXXXXXXX<br/>
-  <strong>Account Name:</strong> TBP Limited<br/>
-  <strong>Account No:</strong> xxxxxxxxxxx
+  <strong>Bank:</strong> Nations Trust Bank<br/>
+  <strong>Branch:</strong>Wellawatte<br/>
+  <strong>Account Name:</strong>F A Uwais<br/>
+  <strong>Account No:</strong> 005212035096
 `;
 
 // --- EMAIL TEMPLATE GENERATORS ---
@@ -269,7 +269,7 @@ const generateCustomerEmail = (order: any, items: any[]) => {
           </div>
 
           <div style="text-align: center;">
-            <a href="https://wa.me/94771234567?text=Hi,%20sending%20payment%20slip%20for%20Order%20${order.orderNumber}" style="background-color: #25D366; color: white; text-decoration: none; padding: 12px 25px; border-radius: 50px; font-weight: bold; font-size: 14px; display: inline-block;">
+            <a href="https://wa.me/+94777242120?text=Hi,%20sending%20payment%20slip%20for%20Order%20${order.orderNumber}" style="background-color: #25D366; color: white; text-decoration: none; padding: 12px 25px; border-radius: 50px; font-weight: bold; font-size: 14px; display: inline-block;">
               Share Slip on WhatsApp &rarr;
             </a>
           </div>

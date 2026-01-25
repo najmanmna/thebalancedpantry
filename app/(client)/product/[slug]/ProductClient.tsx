@@ -10,20 +10,48 @@ import Loading from "@/components/Loading";
 import { urlFor } from "@/sanity/lib/image";
 import { toast } from "react-hot-toast";
 
+// --- Types ---
+interface Bundle {
+  title: string;
+  count: number;
+  price: number;
+  savings?: string;
+  tag?: string;
+}
+
+interface NutritionFact {
+  label: string;
+  value: string;
+  highlight?: boolean;
+}
+
+interface Product {
+  name: string;
+  subtitle?: string;
+  description: string;
+  badge?: string;
+  price: number;
+  mainImage: any;
+  gallery?: any[];
+  bundleOptions?: Bundle[];
+  openingStock?: number;
+  stockOut?: number;
+  benefits?: string[];
+  nutritionFacts?: NutritionFact[];
+}
+
 interface Props {
-  product: any;
+  product: Product;
 }
 
 export default function ProductClient({ product }: Props) {
   const router = useRouter();
   const addItem = useCartStore((state) => state.addItem);
   
-  // --- IMAGES STATE ---
   const allImages = [product.mainImage, ...(product.gallery || [])].filter(Boolean);
   const [selectedImage, setSelectedImage] = useState(allImages[0]);
 
-  // --- BUNDLE STATE ---
-  const [selectedBundle, setSelectedBundle] = useState(
+  const [selectedBundle, setSelectedBundle] = useState<Bundle>(
     product.bundleOptions?.[0] || { 
       title: "Single Pack", 
       count: 1, 
@@ -35,13 +63,11 @@ export default function ProductClient({ product }: Props) {
   const [qty, setQty] = useState(1);
   const [isBuying, setIsBuying] = useState(false);
 
-  // --- STOCK LOGIC ---
+  // Stock Logic
   const openingStock = product?.openingStock ?? 0;
   const stockOut = product?.stockOut ?? 0;
   const availableStock = openingStock - stockOut;
   const isOutOfStock = availableStock <= 0;
-  
-  // Prevent division by zero if bundle count is missing
   const maxQty = selectedBundle.count > 0 ? Math.floor(availableStock / selectedBundle.count) : 0;
 
   useEffect(() => {
@@ -65,8 +91,8 @@ export default function ProductClient({ product }: Props) {
     <>
       {isBuying && <Loading />}
       
-      <div className="bg-cream min-h-screen py-12 sm:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
+      <div className="bg-cream min-h-screen py-18 sm:py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-20 items-start">
 
           {/* --- LEFT: GALLERY & MAIN IMAGE --- */}
           <div className="relative lg:sticky lg:top-24 flex flex-col-reverse sm:flex-row gap-4 h-auto sm:h-[600px] z-10">
@@ -78,14 +104,14 @@ export default function ProductClient({ product }: Props) {
                     <button
                       key={i}
                       onClick={() => setSelectedImage(img)}
-                      className={`relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 transition-all overflow-hidden ${
+                      className={`relative flex-shrink-0 w-16 h-16 sm:w-24 sm:h-24 rounded-2xl border-2 transition-all overflow-hidden ${
                         selectedImage === img 
                           ? "border-brandRed opacity-100 ring-2 ring-brandRed/20" 
                           : "border-charcoal/10 opacity-60 hover:opacity-100 hover:border-charcoal/30"
                       }`}
                     >
                       <Image 
-                        src={urlFor(img).width(200).url()} 
+                        src={urlFor(img).width(200).height(200).url()} 
                         alt={`View ${i}`} 
                         fill 
                         className="object-cover"
@@ -96,16 +122,17 @@ export default function ProductClient({ product }: Props) {
               )}
 
               {/* 2. Main Large Image */}
-              <div className="flex-1 bg-[#F3EFE0] rounded-[3rem] p-8 border border-charcoal/5 relative overflow-hidden group h-[400px] sm:h-full flex items-center justify-center">
-                 <div className="absolute inset-0 border-[3px] border-charcoal/5 rounded-[2.5rem] m-4 pointer-events-none"></div>
+              {/* ✅ FIXED: Removed h-[400px]. Added aspect-square. Reduced padding on mobile. */}
+              <div className="flex-1 bg-[#F3EFE0] rounded-[2rem] sm:rounded-[3rem] p-4 sm:p-8 border border-charcoal/5 relative overflow-hidden group aspect-square sm:aspect-auto sm:h-full flex items-center justify-center">
+                 <div className="absolute inset-0 border-[3px] border-charcoal/5 rounded-[2rem] sm:rounded-[2.5rem] m-3 sm:m-4 pointer-events-none"></div>
                  
                  {product.badge && (
-                   <div className="absolute top-8 left-8 bg-brandRed text-cream font-sans font-bold text-xs uppercase tracking-widest px-3 py-1.5 rounded-full z-10 shadow-sm">
+                   <div className="absolute top-6 left-6 bg-brandRed text-cream font-sans font-bold text-[10px] sm:text-xs uppercase tracking-widest px-3 py-1.5 rounded-full z-10 shadow-sm">
                      {product.badge}
                    </div>
                  )}
                  
-                 <div className="relative w-full h-full p-4">
+                 <div className="relative w-full h-full">
                    <AnimatePresence mode="wait">
                      {selectedImage && (
                        <motion.div
@@ -122,6 +149,7 @@ export default function ProductClient({ product }: Props) {
                            fill
                            className="object-contain drop-shadow-2xl"
                            priority
+                           sizes="(max-width: 768px) 100vw, 50vw"
                          />
                        </motion.div>
                      )}
@@ -131,23 +159,23 @@ export default function ProductClient({ product }: Props) {
           </div>
 
           {/* --- RIGHT: CONTENT --- */}
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-6 sm:gap-8">
             
             {/* Header */}
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <div className="flex text-brandRed">
+                {/* <div className="flex text-brandRed">
                   {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
-                </div>
-                <span className="text-xs font-bold font-sans text-charcoal/60 tracking-wider uppercase">48 Reviews</span>
+                </div> */}
+              
               </div>
               
-              <h1 className="font-serif text-5xl sm:text-6xl font-black text-charcoal mb-2 leading-[0.9]">
+              <h1 className="font-serif text-4xl sm:text-6xl font-black text-charcoal mb-2 leading-[0.9]">
                 {product.name}
               </h1>
               
               {product.subtitle && (
-                <p className="font-serif italic text-2xl text-charcoal/60 font-light mb-6">
+                <p className="font-serif italic text-xl sm:text-2xl text-charcoal/60 font-light mb-6">
                   {product.subtitle}
                 </p>
               )}
@@ -239,7 +267,7 @@ export default function ProductClient({ product }: Props) {
               </button>
             </div>
 
-            {/* Nutrition Accordion (Updated Dynamic Version) */}
+            {/* Nutrition Accordion */}
             <NutritionAccordion nutritionFacts={product.nutritionFacts} />
 
           </div>
@@ -250,8 +278,7 @@ export default function ProductClient({ product }: Props) {
 }
 
 // --- SUB-COMPONENT: Nutrition Accordion ---
-// Defined outside to prevent re-renders and mess
-const NutritionAccordion = React.memo(function NutritionAccordion({ nutritionFacts }: { nutritionFacts?: any[] }) {
+const NutritionAccordion = React.memo(function NutritionAccordion({ nutritionFacts }: { nutritionFacts?: NutritionFact[] }) {
   const [isOpen, setIsOpen] = useState(false);
 
   // Guard Clause: If no data added in Sanity, hide the whole section
@@ -267,7 +294,7 @@ const NutritionAccordion = React.memo(function NutritionAccordion({ nutritionFac
           <div className="w-8 h-8 rounded-full bg-charcoal/5 flex items-center justify-center">
              <Leaf className="w-4 h-4 text-charcoal/60" />
           </div>
-          <span className="font-serif font-bold text-charcoal">Nutrition Facts</span>
+          <span className="font-serif font-bold text-charcoal">More Info</span>
         </div>
         <ChevronDown className={`w-5 h-5 text-charcoal transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
       </button>
@@ -282,7 +309,6 @@ const NutritionAccordion = React.memo(function NutritionAccordion({ nutritionFac
           >
             <div className="p-6 bg-white text-sm font-sans text-charcoal/80 space-y-2 border-t border-charcoal/5">
               
-              {/* DYNAMIC MAPPING START */}
               {nutritionFacts.map((fact, index) => (
                 <div 
                   key={index} 
@@ -296,7 +322,6 @@ const NutritionAccordion = React.memo(function NutritionAccordion({ nutritionFac
                   </span>
                 </div>
               ))}
-              {/* DYNAMIC MAPPING END */}
 
             </div>
           </motion.div>

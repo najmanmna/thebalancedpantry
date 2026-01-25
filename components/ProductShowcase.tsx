@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Minus, Plus, ChevronDown, ShieldCheck, Leaf, Check } from "lucide-react";
+import { Star, Minus, Plus, ChevronDown, ShieldCheck, Leaf } from "lucide-react";
 import useCartStore from "@/store";
 import Loading from "@/components/Loading";
 import { urlFor } from "@/sanity/lib/image";
@@ -37,7 +37,7 @@ interface Product {
   openingStock?: number;
   stockOut?: number;
   benefits?: string[];
-  nutritionFacts?: NutritionFact[]; // ✅ New Dynamic Array
+  nutritionFacts?: NutritionFact[];
 }
 
 interface Props {
@@ -48,11 +48,9 @@ export default function ProductClient({ product }: Props) {
   const router = useRouter();
   const addItem = useCartStore((state) => state.addItem);
   
-  // --- IMAGES STATE ---
   const allImages = [product.mainImage, ...(product.gallery || [])].filter(Boolean);
   const [selectedImage, setSelectedImage] = useState(allImages[0]);
 
-  // --- BUNDLE STATE ---
   const [selectedBundle, setSelectedBundle] = useState<Bundle>(
     product.bundleOptions?.[0] || { 
       title: "Single Pack", 
@@ -65,7 +63,7 @@ export default function ProductClient({ product }: Props) {
   const [qty, setQty] = useState(1);
   const [isBuying, setIsBuying] = useState(false);
 
-  // --- STOCK LOGIC ---
+  // Stock Logic
   const openingStock = product?.openingStock ?? 0;
   const stockOut = product?.stockOut ?? 0;
   const availableStock = openingStock - stockOut;
@@ -82,31 +80,24 @@ export default function ProductClient({ product }: Props) {
     toast.success("Added to Pantry!");
   };
 
-  const handleBuyNow = () => {
-    if (isOutOfStock) return;
-    setIsBuying(true);
-    addItem(product, qty, selectedBundle);
-    setTimeout(() => router.push("/cart"), 500);
-  };
-
   return (
     <>
       {isBuying && <Loading />}
       
-      <div className="bg-cream min-h-screen py-12 sm:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
+      <div className="bg-cream min-h-screen py-8 sm:py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-20 items-start">
 
           {/* --- LEFT: GALLERY & MAIN IMAGE --- */}
-          <div className="relative lg:sticky lg:top-24 flex flex-col-reverse sm:flex-row gap-4 h-auto sm:h-[600px] z-10">
+          <div className="relative lg:sticky lg:top-24 flex flex-col-reverse sm:flex-row gap-4 z-10">
               
-              {/* 1. Vertical Thumbnails */}
+              {/* 1. Vertical Thumbnails (Hidden on tiny screens, shown below on mobile) */}
               {allImages.length > 1 && (
                 <div className="flex sm:flex-col gap-3 overflow-x-auto sm:overflow-y-auto sm:w-24 scrollbar-hide py-2 sm:py-0">
                   {allImages.map((img: any, i: number) => (
                     <button
                       key={i}
                       onClick={() => setSelectedImage(img)}
-                      className={`relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 transition-all overflow-hidden ${
+                      className={`relative flex-shrink-0 w-16 h-16 sm:w-24 sm:h-24 rounded-2xl border-2 transition-all overflow-hidden ${
                         selectedImage === img 
                           ? "border-brandRed opacity-100 ring-2 ring-brandRed/20" 
                           : "border-charcoal/10 opacity-60 hover:opacity-100 hover:border-charcoal/30"
@@ -124,16 +115,18 @@ export default function ProductClient({ product }: Props) {
               )}
 
               {/* 2. Main Large Image */}
-              <div className="flex-1 bg-[#F3EFE0] rounded-[3rem] p-8 border border-charcoal/5 relative overflow-hidden group h-[400px] sm:h-full flex items-center justify-center">
-                 <div className="absolute inset-0 border-[3px] border-charcoal/5 rounded-[2.5rem] m-4 pointer-events-none"></div>
+              <div className="flex-1 bg-[#F3EFE0] rounded-[2.5rem] p-6 sm:p-8 border border-charcoal/5 relative overflow-hidden group">
+                 {/* Decorative Border */}
+                 <div className="absolute inset-0 border-[3px] border-charcoal/5 rounded-[2rem] m-3 pointer-events-none"></div>
                  
                  {product.badge && (
-                   <div className="absolute top-8 left-8 bg-brandRed text-cream font-sans font-bold text-xs uppercase tracking-widest px-3 py-1.5 rounded-full z-10 shadow-sm">
+                   <div className="absolute top-6 left-6 bg-brandRed text-cream font-sans font-bold text-[10px] sm:text-xs uppercase tracking-widest px-3 py-1.5 rounded-full z-10 shadow-sm">
                      {product.badge}
                    </div>
                  )}
                  
-                 <div className="relative w-full h-full p-4">
+                 {/* 👇 FIXED: Use aspect-ratio so it doesn't cut off on mobile */}
+                 <div className="relative w-full aspect-[4/5] sm:aspect-square md:h-[500px]">
                    <AnimatePresence mode="wait">
                      {selectedImage && (
                        <motion.div
@@ -148,7 +141,7 @@ export default function ProductClient({ product }: Props) {
                            src={urlFor(selectedImage).width(800).url()}
                            alt={product.name}
                            fill
-                           className="object-contain drop-shadow-2xl"
+                           className="object-contain drop-shadow-2xl p-2"
                            priority
                            sizes="(max-width: 768px) 100vw, 50vw"
                          />
@@ -160,23 +153,23 @@ export default function ProductClient({ product }: Props) {
           </div>
 
           {/* --- RIGHT: CONTENT --- */}
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-6 sm:gap-8">
             
             {/* Header */}
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <div className="flex text-brandRed">
+                {/* <div className="flex text-brandRed">
                   {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
                 </div>
-                <span className="text-xs font-bold font-sans text-charcoal/60 tracking-wider uppercase">48 Reviews</span>
+                <span className="text-xs font-bold font-sans text-charcoal/60 tracking-wider uppercase">48 Reviews</span> */}
               </div>
               
-              <h1 className="font-serif text-5xl sm:text-6xl font-black text-charcoal mb-2 leading-[0.9]">
+              <h1 className="font-serif text-4xl sm:text-6xl font-black text-charcoal mb-2 leading-[0.9]">
                 {product.name}
               </h1>
               
               {product.subtitle && (
-                <p className="font-serif italic text-2xl text-charcoal/60 font-light mb-6">
+                <p className="font-serif italic text-xl sm:text-2xl text-charcoal/60 font-light mb-6">
                   {product.subtitle}
                 </p>
               )}
@@ -268,7 +261,7 @@ export default function ProductClient({ product }: Props) {
               </button>
             </div>
 
-            {/* Nutrition Accordion (Dynamic) */}
+            {/* Nutrition Accordion */}
             <NutritionAccordion nutritionFacts={product.nutritionFacts} />
 
           </div>
@@ -279,7 +272,6 @@ export default function ProductClient({ product }: Props) {
 }
 
 // --- SUB-COMPONENT: Nutrition Accordion ---
-// Moved outside so it doesn't re-render and lose state when parent updates
 const NutritionAccordion = React.memo(function NutritionAccordion({ nutritionFacts }: { nutritionFacts?: NutritionFact[] }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -296,7 +288,7 @@ const NutritionAccordion = React.memo(function NutritionAccordion({ nutritionFac
           <div className="w-8 h-8 rounded-full bg-charcoal/5 flex items-center justify-center">
              <Leaf className="w-4 h-4 text-charcoal/60" />
           </div>
-          <span className="font-serif font-bold text-charcoal">Nutrition Facts</span>
+          <span className="font-serif font-bold text-charcoal">More Info</span>
         </div>
         <ChevronDown className={`w-5 h-5 text-charcoal transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
       </button>
@@ -311,7 +303,6 @@ const NutritionAccordion = React.memo(function NutritionAccordion({ nutritionFac
           >
             <div className="p-6 bg-white text-sm font-sans text-charcoal/80 space-y-2 border-t border-charcoal/5">
               
-              {/* DYNAMIC MAPPING START */}
               {nutritionFacts.map((fact, index) => (
                 <div 
                   key={index} 
@@ -325,7 +316,6 @@ const NutritionAccordion = React.memo(function NutritionAccordion({ nutritionFac
                   </span>
                 </div>
               ))}
-              {/* DYNAMIC MAPPING END */}
 
             </div>
           </motion.div>
