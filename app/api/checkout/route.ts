@@ -87,6 +87,8 @@ export async function POST(req: Request) {
 
       const bundleData = it.bundle || {}; 
       const selectedBundleDB = fresh.bundleOptions?.find((b: any) => b.title === bundleData.title);
+
+      const itemsPerBundle = selectedBundleDB?.count || 1;
       const finalPrice = selectedBundleDB ? selectedBundleDB.price : (fresh.price ?? 0);
 
       // Prepare Image Ref
@@ -103,6 +105,7 @@ export async function POST(req: Request) {
          quantity: it.quantity,
          price: finalPrice,
          bundleTitle: bundleData.title || "Single",
+         bundleCount: itemsPerBundle,
          productName: fresh.name,
          productImage: imageForSave,
          _productRev: fresh._rev, 
@@ -139,7 +142,8 @@ export async function POST(req: Request) {
     const tx = backendClient.transaction();
     tx.create(orderData);
     orderItems.forEach((it: any) => {
-        tx.patch(it._productId, (p) => p.inc({ stockOut: it.quantity }).ifRevisionId(it._productRev));
+        const totalUnits = it.quantity * (it.bundleCount || 1);
+        tx.patch(it._productId, (p) => p.inc({ stockOut: totalUnits }).ifRevisionId(it._productRev));
     });
 
     const result = await tx.commit();
