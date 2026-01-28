@@ -8,14 +8,51 @@ export function OrderSummaryView(props: any) {
     return <p style={{ padding: "1rem" }}>No order data available</p>;
   }
 
+  // Helper for Payment Status Colors
+  const getPaymentStyle = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'paid': 
+        return { bg: '#dcfce7', text: '#166534', border: '#bbf7d0', icon: '✅' }; // Green
+      case 'pending': 
+        return { bg: '#fff7ed', text: '#9a3412', border: '#ffedd5', icon: '⏳' }; // Orange
+      case 'failed': 
+        return { bg: '#fef2f2', text: '#991b1b', border: '#fecaca', icon: '🚫' }; // Red
+      default: 
+        return { bg: '#f3f4f6', text: '#374151', border: '#e5e7eb', icon: '❓' }; // Gray
+    }
+  };
+
+  const payStyle = getPaymentStyle(data.paymentStatus);
+
   return (
     <div style={{ padding: "1.5rem", fontFamily: "sans-serif", lineHeight: 1.5, maxWidth: "800px" }}>
       
       {/* HEADER */}
       <div style={{ borderBottom: "1px solid #ddd", paddingBottom: "1rem", marginBottom: "1rem" }}>
-        <h2 style={{ margin: 0 }}>Order #{data.orderNumber}</h2>
-        <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem", color: "#666" }}>
-            <span><strong>Status:</strong> {data.status}</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <h2 style={{ margin: 0 }}>Order #{data.orderNumber}</h2>
+            
+            {/* PAYMENT STATUS BADGE (New) */}
+            <div style={{ 
+                background: payStyle.bg, 
+                color: payStyle.text, 
+                border: `1px solid ${payStyle.border}`,
+                padding: '4px 12px', 
+                borderRadius: '99px', 
+                fontSize: '0.85rem', 
+                fontWeight: 'bold',
+                textTransform: 'uppercase',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+            }}>
+                <span>{payStyle.icon}</span>
+                <span>Payment: {data.paymentStatus || 'Pending'}</span>
+            </div>
+        </div>
+
+        <div style={{ display: "flex", gap: "1rem", marginTop: "0.75rem", color: "#666", fontSize: '0.9rem' }}>
+            <span><strong>Fulfillment:</strong> {data.status}</span>
             <span>•</span>
             <span><strong>Date:</strong> {data.orderDate ? new Date(data.orderDate).toLocaleString() : "—"}</span>
         </div>
@@ -78,14 +115,13 @@ export function OrderSummaryView(props: any) {
                 <span style={{ fontWeight: 500 }}>{item.productName || "Unknown Product"}</span>
               </td>
 
-              {/* Bundle Info (Updated to show Pack Count) */}
+              {/* Bundle Info */}
               <td style={{ padding: "12px 8px", verticalAlign: "middle" }}>
                  {item.bundleTitle ? (
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "4px" }}>
                         <span style={{ background: "#e0f2fe", color: "#0369a1", padding: "2px 8px", borderRadius: "99px", fontSize: "0.85em", fontWeight: 600 }}>
                             {item.bundleTitle}
                         </span>
-                        {/* Show count if greater than 1 */}
                         {item.bundleCount > 1 && (
                              <span style={{ fontSize: "0.8em", color: "#666", paddingLeft: "4px" }}>
                                 {item.bundleCount} Packs
@@ -109,7 +145,7 @@ export function OrderSummaryView(props: any) {
 
       {/* TOTALS */}
       <div style={{ marginTop: "2rem", display: "flex", justifyContent: "flex-end" }}>
-        <div style={{ width: "300px", textAlign: "right" }}>
+        <div style={{ width: "320px", textAlign: "right" }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
                 <span style={{ color: "#666" }}>Subtotal:</span>
                 <span>Rs. {data.subtotal?.toLocaleString() ?? 0}</span>
@@ -132,8 +168,16 @@ export function OrderSummaryView(props: any) {
                 <span>Rs. {data.total?.toLocaleString()}</span>
             </div>
              
-             <div style={{ marginTop: "1rem", fontSize: "0.9em", color: "#666" }}>
-                Payment: {data.paymentMethod || "COD"}
+             {/* Payment Details Footer */}
+             <div style={{ marginTop: "1rem", padding: '10px', background: '#f9fafb', borderRadius: '8px', fontSize: "0.9em", color: "#444", textAlign: 'left' }}>
+                <div style={{display:'flex', justifyContent:'space-between', marginBottom:'4px'}}>
+                    <span>Method:</span> 
+                    <strong>{data.paymentMethod || "COD"}</strong>
+                </div>
+                <div style={{display:'flex', justifyContent:'space-between'}}>
+                    <span>Payment Status:</span>
+                    <strong style={{ color: payStyle.text }}>{data.paymentStatus || 'Pending'}</strong>
+                </div>
              </div>
         </div>
       </div>

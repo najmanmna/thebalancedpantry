@@ -52,6 +52,7 @@
     "next": "^15.5.9",
     "next-sanity": "^9.12.3",
     "nodemailer": "^7.0.6",
+    "payable-ipg-js": "^4.1.4",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-hot-toast": "^2.4.1",

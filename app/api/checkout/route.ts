@@ -7,38 +7,53 @@ export const runtime = 'edge';
 
 // --- CONFIGURATION ---
 const resend = new Resend(process.env.RESEND_API_KEY);
-const ADMIN_EMAIL = "orders@thebalancedpantry.lk";
+const ADMIN_EMAIL = "mnanajman@gmail.com"; // Admin notification email
 const SENDER_EMAIL = "The Balanced Pantry <no-reply@thebalancedpantry.lk>";
 const REPLY_TO_EMAIL = "orders@thebalancedpantry.lk"; 
 
-// Brand Colors
 const COLORS = {
   bg: "#F9F9F9",
   card: "#FFFFFF",
   text: "#333333",
-  brand: "#4A3728", // Dark Coffee
-  accent: "#D9534F", // Soft Red
+  brand: "#4A3728",
+  accent: "#D9534F",
   border: "#EAEAEA"
 };
 
 const BANK_DETAILS = `
   <strong>Bank:</strong> Nations Trust Bank<br/>
-  <strong>Branch:</strong>Wellawatte<br/>
-  <strong>Account Name:</strong>F A Uwais<br/>
+  <strong>Branch:</strong> Wellawatte<br/>
+  <strong>Account Name:</strong> F A Uwais<br/>
   <strong>Account No:</strong> 005212035096
 `;
 
-// --- EMAIL TEMPLATE GENERATORS ---
+// --- HELPER: Payable Hash Generation (SHA-512) ---
+async function generatePayableHash(orderId: string, amount: string) {
+  const merchantKey = process.env.NEXT_PUBLIC_PAYABLE_MERCHANT_KEY;
+  const merchantToken = process.env.PAYABLE_MERCHANT_TOKEN;
 
+  if (!merchantKey || !merchantToken) {
+    throw new Error("Missing Payable Credentials");
+  }
 
+  // 1. Encrypt Token
+  const tokenBuffer = new TextEncoder().encode(merchantToken);
+  const tokenHashBuffer = await crypto.subtle.digest("SHA-512", tokenBuffer);
+  const tokenHashArray = Array.from(new Uint8Array(tokenHashBuffer));
+  const encryptedToken = tokenHashArray.map((b) => b.toString(16).padStart(2, "0")).join("").toUpperCase();
 
+  // 2. Generate Final Hash: key|orderId|amount|LKR|encryptedToken
+  const hashString = `${merchantKey}|${orderId}|${amount}|LKR|${encryptedToken}`;
+  const msgBuffer = new TextEncoder().encode(hashString);
+  const hashBuffer = await crypto.subtle.digest("SHA-512", msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("").toUpperCase();
+}
 
 // --- MAIN HANDLER ---
-
 export async function POST(req: Request) {
   try {
     if (!process.env.SANITY_API_TOKEN) {
-      console.error("❌ Missing SANITY_API_TOKEN");
       return NextResponse.json({ error: "Server misconfiguration" }, { status: 500 });
     }
 
@@ -48,117 +63,66 @@ export async function POST(req: Request) {
     // 1. Input Validation
     const phoneRegex = /^(07[0-9]{8}|947[0-9]{8})$/;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneDigits = form.phone ? form.phone.replace(/\D/g, "") : "";
-
-    if (
-      !form?.firstName || !form?.lastName || !form?.address || !form?.district || !form?.city ||
-      !form?.phone || !form?.email ||
-      !Array.isArray(items) || items.length === 0 || typeof total !== "number" ||
-      !emailRegex.test(form.email) ||
-      !phoneRegex.test(phoneDigits)
-    ) {
-      return NextResponse.json({ error: "Invalid or missing checkout fields." }, { status: 400 });
+    
+    if (!form?.firstName || !form?.lastName || !form?.phone || !items?.length || typeof total !== "number") {
+      return NextResponse.json({ error: "Invalid fields." }, { status: 400 });
     }
 
     const orderId = "ORD-" + Math.floor(100000 + Math.random() * 900000);
 
-    // 2. Duplicate Check
-    const existing = await backendClient.fetch(
-      `*[_type == "order" && phone == $phone && total == $total && orderDate > $recent][0]`,
-      {
-        phone: form.phone,
-        total,
-        recent: new Date(Date.now() - 1000 * 30).toISOString(),
-      }
-    );
-
-    if (existing) {
-      return NextResponse.json({ error: "Duplicate order detected. Please wait a moment." }, { status: 429 });
-    }
-
-    // 3. Fetch Products & Validate Stock
+    // 2. Fetch Products & Validate Stock
     const productIds = items.map((it: any) => it.product._id);
-    
     const freshProducts = await backendClient.fetch(
-      `*[_type=="product" && _id in $ids]{
-        _id, _rev, name, price, images, bundleOptions, 
-        openingStock, stockOut,
-        "availableStock": coalesce(openingStock, 0) - coalesce(stockOut, 0)
-      }`,
+      `*[_type=="product" && _id in $ids]{ _id, _rev, name, price, images, bundleOptions, openingStock, stockOut, "availableStock": coalesce(openingStock, 0) - coalesce(stockOut, 0) }`,
       { ids: productIds }
     );
 
     const orderItems = [];
-
     for (const it of items) {
       const fresh = freshProducts.find((p: any) => p._id === it.product._id);
-      
-      if (!fresh) {
-        return NextResponse.json({ error: `Product not found: ${it.product?._id}` }, { status: 404 });
-      }
+      if (!fresh) return NextResponse.json({ error: `Product not found: ${it.product?._id}` }, { status: 404 });
+      if (fresh.availableStock < it.quantity) return NextResponse.json({ error: `Insufficient stock for ${fresh.name}` }, { status: 409 });
 
-      if (fresh.availableStock < it.quantity) {
-        return NextResponse.json(
-          { error: `Insufficient stock for ${fresh.name}. Only ${fresh.availableStock} left.` },
-          { status: 409 }
-        );
-      }
-
-      // Prepare Image
-      const rawImage = it.productImage || fresh?.images?.[0];
-      let imageForSave = undefined;
-      if (rawImage?.asset?._ref || rawImage?.asset?._id) {
-         imageForSave = {
-            _type: "image",
-            asset: { 
-               _type: "reference", 
-               _ref: rawImage.asset._ref || rawImage.asset._id 
-            }
-         };
-      }
-
-      // Determine Price
       const bundleData = it.bundle || {}; 
-      const selectedBundleDB = fresh.bundleOptions?.find(
-          (b: any) => b.title === bundleData.title
-      );
+      const selectedBundleDB = fresh.bundleOptions?.find((b: any) => b.title === bundleData.title);
       const finalPrice = selectedBundleDB ? selectedBundleDB.price : (fresh.price ?? 0);
 
+      // Prepare Image Ref
+      const rawImage = it.productImage || fresh?.images?.[0];
+      let imageForSave = undefined;
+      if (rawImage?.asset?._ref) {
+         imageForSave = { _type: "image", asset: { _type: "reference", _ref: rawImage.asset._ref } };
+      }
+
       orderItems.push({
-          _type: "orderItem",
-          _key: uuidv4(),
-          product: { _type: "reference", _ref: it.product._id },
-          quantity: it.quantity,
-          price: finalPrice,
-          bundleTitle: bundleData.title || "Single",
-          bundleCount: bundleData.count || 1,
-          bundleSavings: bundleData.savings || "",
-          productName: fresh?.name || "Unknown",
-          productImage: imageForSave,
-          _productRev: fresh._rev, 
-          _productId: fresh._id
+         _type: "orderItem",
+         _key: uuidv4(),
+         product: { _type: "reference", _ref: it.product._id },
+         quantity: it.quantity,
+         price: finalPrice,
+         bundleTitle: bundleData.title || "Single",
+         productName: fresh.name,
+         productImage: imageForSave,
+         _productRev: fresh._rev, 
+         _productId: fresh._id
       });
     }
 
-    // Recalculate Subtotal
     const calculatedSubtotal = orderItems.reduce((acc, it) => acc + (it.price * it.quantity), 0);
 
-    // 5. Build Order Object
+    // 3. Build Order Object
+    const isCard = form.payment === "CARD";
     const orderData = {
       _type: "order",
       orderNumber: orderId,
       status: "pending",
+      paymentStatus: "pending", // ✅ Added payment status
       orderDate: new Date().toISOString(),
       customerName: `${form.firstName} ${form.lastName}`,
       phone: form.phone,
       alternativePhone: form.alternativePhone || "",
       email: form.email || "",
-      address: {
-        district: form.district,
-        city: form.city,
-        line1: form.address,
-        notes: form.notes || "",
-      },
+      address: { district: form.district, city: form.city, line1: form.address, notes: form.notes || "" },
       paymentMethod: form.payment || "COD",
       items: orderItems,
       subtotal: calculatedSubtotal, 
@@ -166,152 +130,93 @@ export async function POST(req: Request) {
       discountAmount,
       discountLabel: discountLabel || "",
       total,
+      emailSent: false,
     };
 
-    // 6. Commit Transaction
+    // 4. Commit Transaction
     const tx = backendClient.transaction();
     tx.create(orderData);
-
     orderItems.forEach((it: any) => {
-        tx.patch(it._productId, (p) =>
-          p.inc({ stockOut: it.quantity }).ifRevisionId(it._productRev) 
-        );
+        tx.patch(it._productId, (p) => p.inc({ stockOut: it.quantity }).ifRevisionId(it._productRev));
     });
 
     const result = await tx.commit();
+    if (!result) return NextResponse.json({ error: "Order failed." }, { status: 500 });
 
-    if (!result || !result.results?.length) {
-      console.error("❌ Transaction failed:", result);
-      return NextResponse.json({ error: "Order could not be processed. Please try again." }, { status: 500 });
+    // ----------------------------------------------------
+    // 💳 CARD PAYMENT LOGIC
+    // ----------------------------------------------------
+    if (isCard) {
+      // 1. Send "Payment Pending" Email to Admin ONLY
+      try {
+        await resend.emails.send({
+          from: SENDER_EMAIL,
+          to: ADMIN_EMAIL,
+          subject: `[ACTION REQUIRED] Payment Pending: Order ${orderId}`,
+          html: generateAdminPendingEmail(orderId, orderData.customerName, total)
+        });
+      } catch (e) { console.error("Admin pending email failed", e); }
+
+      // 2. Generate Hash & Return to Frontend
+      const hash = await generatePayableHash(orderId, total.toFixed(2));
+      return NextResponse.json({ 
+        message: "Order created, proceed to payment", 
+        orderId, 
+        hash 
+      }, { status: 200 });
     }
 
-    // 7. Send Emails (Non-blocking)
-    try {
-      const customerHtml = generateCustomerEmail(orderData, orderItems);
-      const adminHtml = generateAdminEmail(orderData, orderItems);
+    // ----------------------------------------------------
+    // 📦 COD / BANK TRANSFER LOGIC
+    // ----------------------------------------------------
+    else {  // ✅ Added ELSE block to prevent double emails
+        try {
+          const customerHtml = generateCustomerEmail(orderData, orderItems);
+          const adminHtml = generateAdminEmail(orderData, orderItems);
 
-      // A. Send Customer Email
-      const customerEmailReq = resend.emails.send({
-        from: SENDER_EMAIL,
-        to: form.email,
-        replyTo: REPLY_TO_EMAIL,
-        subject: `Order Confirmation ${orderId} - The Balanced Pantry`,
-        html: customerHtml
-      });
+          await Promise.all([
+            resend.emails.send({
+              from: SENDER_EMAIL,
+              to: form.email,
+              replyTo: REPLY_TO_EMAIL,
+              subject: `Order Confirmation ${orderId}`,
+              html: customerHtml
+            }),
+            resend.emails.send({
+              from: SENDER_EMAIL,
+              to: ADMIN_EMAIL,
+              replyTo: form.email,
+              subject: `🔔 New Order: ${orderId} (Rs. ${total})`,
+              html: adminHtml
+            })
+          ]);
+        } catch (e) { console.error("Email failed", e); }
 
-      // B. Send Admin Email
-      const adminEmailReq = resend.emails.send({
-        from: SENDER_EMAIL,
-        to: ADMIN_EMAIL,
-        replyTo: form.email,
-        subject: `🔔 New Order: ${orderId} (Rs. ${total})`,
-        html: adminHtml
-      });
-
-      await Promise.all([customerEmailReq, adminEmailReq]);
-
-    } catch (emailError) {
-      console.error("⚠️ Email sending failed, but order was placed:", emailError);
+        return NextResponse.json({ message: "Order placed successfully!", orderId, payment: form.payment }, { status: 200 });
     }
 
-    return NextResponse.json(
-      { message: "Order placed successfully!", orderId, payment: form.payment },
-      { status: 200 }
-    );
   } catch (err: any) {
-    console.error("❌ Checkout API CRITICAL Error:", err);
+    console.error("❌ Checkout Error:", err);
     return NextResponse.json({ error: `Server error: ${err.message}` }, { status: 500 });
   }
 }
 
+// --- EMAIL TEMPLATES ---
 
-const generateCustomerEmail = (order: any, items: any[]) => {
-  const isBankTransfer = order.paymentMethod?.toLowerCase().includes("bank");
-  const date = new Date().toLocaleDateString("en-US", { month: 'long', day: 'numeric', year: 'numeric' });
-
-  const itemsRows = items.map(item => `
-    <tr style="border-bottom: 1px solid ${COLORS.border};">
-      <td style="padding: 12px 0;">
-        <span style="font-weight: 600; color: ${COLORS.text};">${item.productName}</span><br/>
-        <span style="font-size: 12px; color: #888;">${item.bundleTitle}</span>
-      </td>
-      <td style="padding: 12px 0; text-align: center;">${item.quantity}</td>
-      <td style="padding: 12px 0; text-align: right;">Rs. ${(item.price * item.quantity).toLocaleString()}</td>
-    </tr>
-  `).join("");
-
+const generateAdminPendingEmail = (orderId: string, customerName: string, total: number) => {
   return `
     <!DOCTYPE html>
     <html>
-    <head><meta name="viewport" content="width=device-width, initial-scale=1.0"/></head>
-    <body style="margin:0; padding:0; background-color:${COLORS.bg}; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: ${COLORS.text};">
-      <div style="max-width: 600px; margin: 0 auto; background: ${COLORS.card};">
-        
-        <div style="background-color: ${COLORS.brand}; padding: 30px; text-align: center;">
-          <h1 style="color: #F3EFE0; margin: 0; font-family: Georgia, serif; letter-spacing: 1px;">The Balanced Pantry.</h1>
+    <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+      <div style="max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border: 1px solid #ddd;">
+        <div style="background-color: #F59E0B; padding: 15px; text-align: center; color: white;">
+          <h2>⏳ Payment Pending (Card)</h2>
         </div>
-
-        <div style="padding: 40px 30px 20px;">
-          <h2 style="margin-top: 0; color: ${COLORS.brand};">Order Confirmed!</h2>
-          <p style="font-size: 16px; line-height: 1.5; color: #555;">
-            Hi ${order.customerName.split(' ')[0]},<br/><br/>
-            Thank you for choosing healthy snacking! We've received your order <strong>#${order.orderNumber}</strong> and are getting it ready.
-          </p>
-        </div>
-
-        ${isBankTransfer ? `
-        <div style="margin: 0 30px; background-color: #FFF8F0; border: 2px dashed ${COLORS.brand}; border-radius: 8px; padding: 20px;">
-          <h3 style="margin-top: 0; color: ${COLORS.accent}; font-size: 16px; text-transform: uppercase;">⚠️ Action Required: Payment</h3>
-          <p style="margin-bottom: 15px; font-size: 14px;">Please transfer <strong>Rs. ${order.total.toLocaleString()}</strong> to the account below and share the slip via WhatsApp to confirm your order.</p>
-          
-          <div style="background: #fff; padding: 15px; border-radius: 4px; border: 1px solid #ddd; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
-            ${BANK_DETAILS}
-          </div>
-
-          <div style="text-align: center;">
-            <a href="https://wa.me/+94777242120?text=Hi,%20sending%20payment%20slip%20for%20Order%20${order.orderNumber}" style="background-color: #25D366; color: white; text-decoration: none; padding: 12px 25px; border-radius: 50px; font-weight: bold; font-size: 14px; display: inline-block;">
-              Share Slip on WhatsApp &rarr;
-            </a>
-          </div>
-        </div>
-        ` : ''}
-
-        <div style="padding: 30px;">
-          <h3 style="border-bottom: 2px solid ${COLORS.brand}; padding-bottom: 10px; margin-bottom: 15px; color: ${COLORS.brand};">Order Summary</h3>
-          <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-            <thead>
-              <tr style="color: #888; font-size: 12px; text-transform: uppercase;">
-                <th style="text-align: left; padding-bottom: 10px;">Item</th>
-                <th style="text-align: center; padding-bottom: 10px;">Qty</th>
-                <th style="text-align: right; padding-bottom: 10px;">Price</th>
-              </tr>
-            </thead>
-            <tbody>${itemsRows}</tbody>
-            <tfoot>
-              <tr>
-                <td colspan="2" style="padding-top: 15px; text-align: right; color: #888;">Subtotal</td>
-                <td style="padding-top: 15px; text-align: right;">Rs. ${order.subtotal.toLocaleString()}</td>
-              </tr>
-              <tr>
-                <td colspan="2" style="padding-top: 5px; text-align: right; color: #888;">Shipping</td>
-                <td style="padding-top: 5px; text-align: right;">Rs. ${order.shippingCost}</td>
-              </tr>
-              ${order.discountAmount > 0 ? `
-              <tr>
-                <td colspan="2" style="padding-top: 5px; text-align: right; color: ${COLORS.accent};">Discount (${order.discountLabel})</td>
-                <td style="padding-top: 5px; text-align: right; color: ${COLORS.accent};">- Rs. ${order.discountAmount}</td>
-              </tr>` : ''}
-              <tr>
-                <td colspan="2" style="padding-top: 15px; text-align: right; font-weight: bold; font-size: 16px;">Total</td>
-                <td style="padding-top: 15px; text-align: right; font-weight: bold; font-size: 16px;">Rs. ${order.total.toLocaleString()}</td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-
-        <div style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px; color: #999;">
-          <p style="margin: 0;">The Balanced Pantry, Colombo, Sri Lanka.</p>
-          
+        <p>A new order <strong>${orderId}</strong> has been created via Card payment.</p>
+        <p><strong>Customer:</strong> ${customerName}</p>
+        <p><strong>Total:</strong> Rs. ${total.toLocaleString()}</p>
+        <div style="background: #FFF8E1; padding: 10px; margin-top: 10px; border-left: 4px solid #F59E0B;">
+          ⚠️ <strong>Do not ship yet.</strong> Verify Payment.
         </div>
       </div>
     </body>
@@ -319,52 +224,61 @@ const generateCustomerEmail = (order: any, items: any[]) => {
   `;
 };
 
-const generateAdminEmail = (order: any, items: any[]) => {
- const isBankTransfer = order.paymentMethod?.toLowerCase().includes("bank");
-  
+const generateCustomerEmail = (order: any, items: any[]) => {
+  const isBankTransfer = order.paymentMethod?.toLowerCase().includes("bank");
+  const itemsRows = items.map(item => `
+    <tr style="border-bottom: 1px solid ${COLORS.border};">
+      <td style="padding: 12px 0;">${item.productName}<br/><span style="font-size: 12px; color: #888;">${item.bundleTitle}</span></td>
+      <td style="text-align: center;">${item.quantity}</td>
+      <td style="text-align: right;">Rs. ${(item.price * item.quantity).toLocaleString()}</td>
+    </tr>`).join("");
+
   return `
     <!DOCTYPE html>
     <html>
-    <body style="font-family: monospace; background-color: #eee; padding: 20px;">
-      <div style="max-width: 500px; margin: 0 auto; background: #fff; padding: 20px; border: 1px solid #ddd;">
+    <body style="font-family: Arial, sans-serif; color: ${COLORS.text};">
+      <div style="max-width: 600px; margin: auto; padding: 20px;">
+        <h2 style="color: ${COLORS.brand};">Order Confirmed!</h2>
+        <p>Hi ${order.customerName.split(' ')[0]}, we received your order <strong>#${order.orderNumber}</strong>.</p>
         
-        <div style="border-left: 5px solid ${isBankTransfer ? '#E67E22' : '#27AE60'}; padding-left: 15px; margin-bottom: 20px;">
-          <h2 style="margin: 0;">${isBankTransfer ? '⚠️ Pending Payment' : '✅ COD Order'}</h2>
-          <p style="margin: 5px 0; font-size: 18px; font-weight: bold;">Order ${order.orderNumber}</p>
-          <p style="margin: 0; color: #666;">${new Date().toLocaleString()}</p>
-        </div>
+        ${isBankTransfer ? `
+        <div style="background: #FFF8F0; border: 1px dashed ${COLORS.brand}; padding: 15px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: ${COLORS.accent};">⚠️ Payment Required</h3>
+          <p>Please transfer <strong>Rs. ${order.total.toLocaleString()}</strong> to:</p>
+          ${BANK_DETAILS}
+          <p><a href="https://wa.me/+94777242120?text=Payment%20Slip%20for%20${order.orderNumber}">Share Slip via WhatsApp</a></p>
+        </div>` : ''}
 
-        <div style="background: #f9f9f9; padding: 15px; margin-bottom: 20px;">
-          <strong>CUSTOMER:</strong><br/>
-          ${order.customerName}<br/>
-          <a href="tel:${order.phone}" style="color: blue;">${order.phone}</a><br/>
-          ${order.email}
-        </div>
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead><tr><th align="left">Item</th><th>Qty</th><th align="right">Price</th></tr></thead>
+          <tbody>${itemsRows}</tbody>
+          <tfoot>
+            <tr><td colspan="2" align="right">Subtotal</td><td align="right">Rs. ${order.subtotal.toLocaleString()}</td></tr>
+            <tr><td colspan="2" align="right">Shipping</td><td align="right">Rs. ${order.shippingCost}</td></tr>
+            <tr><td colspan="2" align="right"><strong>Total</strong></td><td align="right"><strong>Rs. ${order.total.toLocaleString()}</strong></td></tr>
+          </tfoot>
+        </table>
+      </div>
+    </body>
+    </html>
+  `;
+};
 
-        <div style="margin-bottom: 20px;">
-          <strong>SHIPPING ADDRESS (Copy for Label):</strong>
-          <pre style="background: #eee; padding: 10px; border-radius: 5px; font-size: 14px;">${order.customerName}
-${order.address.line1}
-${order.address.city}, ${order.address.district}
-Phone: ${order.phone}</pre>
-        </div>
-
-        <div style="margin-bottom: 20px;">
-          <strong>PACKING LIST:</strong>
-          <ul style="border-top: 1px dashed #ccc; padding-top: 10px; list-style: none; padding-left: 0;">
-            ${items.map(i => `
-              <li style="padding: 5px 0; border-bottom: 1px solid #eee;">
-                <span style="font-weight: bold;">[ x${i.quantity} ]</span> ${i.productName} <span style="color: #888; font-size: 12px;">(${i.bundleTitle})</span>
-              </li>
-            `).join('')}
-          </ul>
-        </div>
-
-        <div style="text-align: right; font-size: 18px; font-weight: bold; border-top: 2px solid #000; padding-top: 10px;">
-          COLLECT: Rs. ${order.total.toLocaleString()}
-          ${isBankTransfer ? '<br/><span style="font-size: 12px; color: red; font-weight: normal;">(Check Bank Slip First)</span>' : ''}
-        </div>
-        
+const generateAdminEmail = (order: any, items: any[]) => {
+  const isBankTransfer = order.paymentMethod?.toLowerCase().includes("bank");
+  return `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: monospace; background: #eee; padding: 20px;">
+      <div style="background: #fff; padding: 20px; max-width: 500px; margin: auto;">
+        <h2 style="color: ${isBankTransfer ? '#E67E22' : '#27AE60'};">${isBankTransfer ? '⚠️ Pending Payment' : '✅ New Order'}</h2>
+        <p><strong>Order:</strong> ${order.orderNumber}</p>
+        <p><strong>Customer:</strong> ${order.customerName} (${order.phone})</p>
+        <hr/>
+        <ul>${items.map(i => `<li>${i.productName} x${i.quantity}</li>`).join('')}</ul>
+        <hr/>
+        <p><strong>Total:</strong> Rs. ${order.total.toLocaleString()}</p>
+        <p><strong>Address:</strong> ${order.address.line1}, ${order.address.city}</p>
       </div>
     </body>
     </html>

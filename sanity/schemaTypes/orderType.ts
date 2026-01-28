@@ -34,21 +34,40 @@ export const orderType = defineType({
     // 🔹 2. Status Management
     defineField({
       name: "status",
-      title: "Customer Status",
+      title: "Order Status (Fulfillment)",
       type: "string",
       group: "admin",
       options: {
         list: [
-          { title: "Pending Payment", value: "pending" },
+          { title: "Pending", value: "pending" },
           { title: "Processing", value: "processing" },
           { title: "Shipped", value: "shipped" },
           { title: "Delivered", value: "delivered" },
           { title: "Cancelled", value: "cancelled" },
         ],
-        layout: "radio", // Easier to click
+        layout: "radio",
       },
       initialValue: "pending",
     }),
+    
+    // 🆕 Payment Status
+    defineField({
+      name: "paymentStatus",
+      title: "Payment Status",
+      type: "string",
+      group: "admin",
+      options: {
+        list: [
+          { title: "Pending", value: "pending" },
+          { title: "Paid", value: "paid" },
+          { title: "Failed", value: "failed" },
+          { title: "Refunded", value: "refunded" },
+        ],
+        layout: "radio",
+      },
+      initialValue: "pending",
+    }),
+
     // Internal note for your team (not seen by customer)
     defineField({
       name: "internalNote",
@@ -73,6 +92,12 @@ export const orderType = defineType({
       type: "string",
       group: "customer",
       validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: "alternativePhone",
+      title: "Alternative Phone",
+      type: "string",
+      group: "customer",
     }),
     defineField({
       name: "email",
@@ -110,6 +135,7 @@ export const orderType = defineType({
         list: [
           { title: "Cash on Delivery", value: "COD" },
           { title: "Bank Transfer", value: "BANK" },
+          { title: "Card Payment (Payable)", value: "CARD" }, // Added Card
         ],
       },
     }),
@@ -151,6 +177,16 @@ export const orderType = defineType({
       validation: (Rule) => Rule.required(),
       readOnly: true,
     }),
+    
+    // System Fields
+    defineField({
+      name: "emailSent",
+      title: "Success Email Sent",
+      type: "boolean",
+      group: "admin",
+      hidden: true,
+      initialValue: false,
+    }),
   ],
 
   preview: {
@@ -159,10 +195,13 @@ export const orderType = defineType({
       total: "total",
       orderId: "orderNumber",
       status: "status",
+      paymentStatus: "paymentStatus",
+      paymentMethod: "paymentMethod",
       date: "orderDate",
     },
-    prepare({ name, total, orderId, status, date }) {
+    prepare({ name, total, orderId, status, paymentStatus, paymentMethod, date }) {
       const d = new Date(date).toLocaleDateString();
+      
       const statusEmojis: Record<string, string> = {
         pending: "🟡",
         processing: "⚙️",
@@ -170,10 +209,20 @@ export const orderType = defineType({
         delivered: "✅",
         cancelled: "❌",
       };
+      
+      const payEmojis: Record<string, string> = {
+        paid: "💳",
+        pending: "⏳",
+        failed: "🚫",
+        refunded: "↩️",
+      };
+
+      const sEmoji = statusEmojis[status] || "⚪️";
+      const pEmoji = payEmojis[paymentStatus] || "❓";
 
       return {
-        title: `${statusEmojis[status] || "⚪️"} ${name} (Rs. ${total})`,
-        subtitle: `#${orderId} — ${d} — ${status.toUpperCase()}`,
+        title: `${sEmoji} ${name} (Rs. ${total})`,
+        subtitle: `${pEmoji} ${paymentStatus?.toUpperCase()} | ${paymentMethod} | #${orderId}`,
       };
     },
   },

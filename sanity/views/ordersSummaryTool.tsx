@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { definePlugin, useClient } from "sanity";
-// 🔹 Import useRouter for navigation within Studio
 import { useRouter } from "sanity/router"; 
 import { 
   Card, 
@@ -26,7 +25,7 @@ import {
   ClockIcon, 
   CheckmarkCircleIcon,
   EyeOpenIcon,
-  ChevronRightIcon
+  CreditCardIcon
 } from "@sanity/icons";
 
 export const ordersSummaryTool = definePlugin({
@@ -55,7 +54,9 @@ interface Order {
   _type: string;
   orderNumber: string;
   customerName: string;
-  status: string;
+  status: string;        // Fulfillment Status
+  paymentStatus: string; // Payment Status
+  paymentMethod: string; // 🆕 Payment Method
   total: number;
   orderDate: string;
   items: OrderItem[];
@@ -63,7 +64,7 @@ interface Order {
 
 function OrdersSummary() {
   const client = useClient({ apiVersion: "2025-01-01" });
-  const router = useRouter(); // 🔹 Hook for navigation
+  const router = useRouter(); 
   
   const [orders, setOrders] = useState<Order[]>([]);
   const [search, setSearch] = useState("");
@@ -81,6 +82,8 @@ function OrdersSummary() {
           orderNumber,
           customerName,
           status,
+          paymentStatus,
+          paymentMethod, 
           total,
           orderDate,
           items[]{
@@ -106,7 +109,6 @@ function OrdersSummary() {
 
   // --- 2. Action Handler ---
   const handleViewOrder = (id: string, type: string) => {
-    // Navigate to the "editor" intent for this document
     router.navigateIntent("edit", { id, type });
   };
 
@@ -119,12 +121,15 @@ function OrdersSummary() {
     .filter((o) => !filterStatus || o.status === filterStatus);
 
   // --- 4. Dashboard Stats ---
-  const totalRevenue = filteredOrders.reduce((acc, curr) => acc + (curr.total || 0), 0);
+  const totalRevenue = filteredOrders
+    .filter(o => o.paymentStatus === 'paid') 
+    .reduce((acc, curr) => acc + (curr.total || 0), 0);
+
   const pendingCount = filteredOrders.filter(o => o.status === 'pending').length;
   const deliveredCount = filteredOrders.filter(o => o.status === 'delivered').length;
 
   // --- 5. Helpers ---
-  const getStatusTone = (status?: string) => {
+  const getFulfillmentTone = (status?: string) => {
     switch (status) {
       case "pending": return "caution";   
       case "processing": return "primary"; 
@@ -134,6 +139,25 @@ function OrdersSummary() {
       default: return "default";           
     }
   };
+
+  const getPaymentTone = (status?: string) => {
+    switch (status?.toLowerCase()) {
+      case "paid": return "positive";
+      case "pending": return "caution";
+      case "failed": return "critical";
+      case "refunded": return "default";
+      default: return "default";
+    }
+  };
+
+  const formatPaymentMethod = (method?: string) => {
+    switch(method) {
+        case 'CARD': return 'Online Card';
+        case 'COD': return 'Cash on Delivery';
+        case 'BANK': return 'Bank Transfer';
+        default: return method || 'Unknown';
+    }
+  }
 
   return (
     <Card height="fill" tone="transparent" padding={[3, 4, 5]} overflow="auto">
@@ -160,13 +184,13 @@ function OrdersSummary() {
           <Grid columns={[1, 1, 3]} gap={3}>
              <StatsCard 
                 icon={BillIcon} 
-                label="Total Revenue" 
+                label="Verified Revenue" 
                 value={`LKR ${totalRevenue.toLocaleString()}`} 
                 tone="primary" 
              />
              <StatsCard 
                 icon={ClockIcon} 
-                label="Pending Orders" 
+                label="Pending Fulfillment" 
                 value={pendingCount} 
                 tone="caution" 
              />
@@ -193,7 +217,7 @@ function OrdersSummary() {
                 />
               </Box>
               <Box flex={1} style={{ minWidth: "180px" }}>
-                <Label size={1} muted>Filter by Status</Label>
+                <Label size={1} muted>Filter by Fulfillment</Label>
                 <Select
                   fontSize={2}
                   value={filterStatus}
@@ -219,13 +243,14 @@ function OrdersSummary() {
                 </Flex>
             ) : (
                 <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "900px" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1000px" }}>
                     <thead style={{ backgroundColor: "#f9fafb", borderBottom: "1px solid #e5e7eb" }}>
                       <tr>
                         <th style={thStyle}>Order #</th>
                         <th style={thStyle}>Date</th>
                         <th style={thStyle}>Customer</th>
-                        <th style={thStyle}>Items (Bundles)</th>
+                        <th style={thStyle}>Items</th>
+                        <th style={thStyle}>Payment</th> {/* 🆕 Updated Column */}
                         <th style={thStyle}>Status</th>
                         <th style={thStyle} align="right">Total</th>
                         <th style={thStyle} align="center">Action</th>
@@ -275,9 +300,21 @@ function OrdersSummary() {
                               </Stack>
                             </td>
 
-                            {/* Status */}
+                            {/* 🆕 Payment Method & Status */}
                             <td style={tdStyle}>
-                              <Badge tone={getStatusTone(o.status)} mode="outline" fontSize={1}>
+                                <Flex direction="column" align="flex-start" gap={2}>
+                                    <Text size={1} weight="semibold" style={{color: o.paymentMethod === 'CARD' ? '#2563EB' : 'inherit'}}>
+                                        {formatPaymentMethod(o.paymentMethod)}
+                                    </Text>
+                                    <Badge tone={getPaymentTone(o.paymentStatus)} fontSize={0}>
+                                        {o.paymentStatus ? o.paymentStatus.toUpperCase() : "PENDING"}
+                                    </Badge>
+                                </Flex>
+                            </td>
+
+                            {/* Fulfillment Status */}
+                            <td style={tdStyle}>
+                              <Badge tone={getFulfillmentTone(o.status)} mode="outline" fontSize={1}>
                                 {o.status?.toUpperCase() || "UNKNOWN"}
                               </Badge>
                             </td>
@@ -305,7 +342,7 @@ function OrdersSummary() {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={7} style={{ padding: "80px", textAlign: "center" }}>
+                          <td colSpan={8} style={{ padding: "80px", textAlign: "center" }}>
                             <Stack space={3}>
                                <Text size={2} weight="medium">No orders found</Text>
                                <Text size={1} muted>Try adjusting your filters</Text>
