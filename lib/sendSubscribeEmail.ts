@@ -1,4 +1,3 @@
-// lib/sendSubscribeEmail.ts
 "use server";
 import { Resend } from "resend";
 
@@ -8,27 +7,27 @@ interface EmailProps {
   to: string;
   subject: string;
   html: string;
+  replyTo?: string; // Made optional/dynamic
 }
 
-// 🔽 --- PUT YOUR CLIENT'S REAL EMAIL HERE --- 🔽
-const CLIENT_REPLY_TO_EMAIL = "orders@elvynstore.com";
+// 🔽 --- UPDATED FOR THE BALANCED PANTRY --- 🔽
+const ADMIN_EMAIL = "orders@thebalancedpantry.lk";
+const SENDER_EMAIL = "The Balanced Pantry <no-reply@thebalancedpantry.lk>";
 // -------------------------------------------------
 
-export const sendSubscribeEmail = async ({ to, subject, html }: EmailProps) => {
+export const sendEmail = async ({ to, subject, html, replyTo }: EmailProps) => {
   if (!process.env.RESEND_API_KEY) {
-    console.error("RESEND_API_KEY is not set.");
-    throw new Error("Email provider is not configured.");
+    throw new Error("RESEND_API_KEY is not set.");
   }
 
   try {
     const { data, error } = await resend.emails.send({
-      from: "Elvyn Store <no-reply@elvynstore.com>",
+      from: SENDER_EMAIL,
       to: [to],
       subject: subject,
       html: html,
-      
-      // 🔽 --- THIS IS THE NEW, CRITICAL LINE --- 🔽
-      replyTo: CLIENT_REPLY_TO_EMAIL,
+      // Default to Admin email if no specific reply-to is provided
+      replyTo: replyTo || ADMIN_EMAIL, 
     });
 
     if (error) {
@@ -36,7 +35,6 @@ export const sendSubscribeEmail = async ({ to, subject, html }: EmailProps) => {
       throw new Error(error.message);
     }
 
-    console.log("Email sent successfully:", data?.id);
     return data;
   } catch (error) {
     console.error("Failed to send email:", error);

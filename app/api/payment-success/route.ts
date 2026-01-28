@@ -5,7 +5,7 @@ import { Resend } from "resend";
 export const runtime = 'edge';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const ADMIN_EMAIL = "najeeramni@gmail.com";
+const ADMIN_EMAIL = "najeeramni@gmail.com"; 
 const SENDER_EMAIL = "The Balanced Pantry <no-reply@thebalancedpantry.lk>";
 
 // --- 1. HELPER: Format Currency ---
@@ -20,16 +20,16 @@ const generateEmailHtml = (order: any, isCustomer: boolean) => {
     : `Order <strong>#${order.orderNumber}</strong> has been paid online. Status updated to Processing.`;
 
   // Generate Product Rows
-  const productRows = order.products.map((item: any) => `
+  const productRows = order.products?.map((item: any) => `
     <tr>
       <td style="padding: 12px; border-bottom: 1px solid #eee; color: #4A3728;">
-        <strong>${item.name || "Unknown Product"}</strong><br/>
+        <strong>${item.name || "Product"}</strong><br/>
         <span style="font-size: 12px; color: #888;">${item.bundleTitle || "Standard"}</span>
       </td>
       <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center; color: #4A3728;">${item.quantity}</td>
       <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; color: #4A3728;">${formatMoney(item.price)}</td>
     </tr>
-  `).join("");
+  `).join("") || "";
 
   return `
     <!DOCTYPE html>
@@ -76,14 +76,14 @@ const generateEmailHtml = (order: any, isCustomer: boolean) => {
           <div class="address-box">
             <strong>🚚 Shipping To:</strong><br/>
             ${order.customerName}<br/>
-            ${order.shippingAddress?.street || ""}<br/>
-            ${order.shippingAddress?.city || ""}, ${order.shippingAddress?.zip || ""}<br/>
+            ${order.address?.line1 || ""}<br/>
+            ${order.address?.city || ""}, ${order.address?.district || ""}<br/>
             Phone: ${order.phone}
           </div>
 
           ${!isCustomer ? `
             <div style="margin-top: 20px; text-align: center;">
-             <a href="https://www.sanity.io/@oiCUBzq3Y/studio/yzqf3cym7zm5r409x94f9toj/default/orders-summary" class="btn" style="background-color: #4A3728;">Manage Order in Studio</a>
+              <a href="https://thebalancedpantry.lk/studio/desk/orders" class="btn" style="background-color: #4A3728;">Manage Order</a>
             </div>
           ` : ''}
         </div>
@@ -101,8 +101,7 @@ export async function POST(req: Request) {
     const { orderId } = await req.json();
     if (!orderId) return NextResponse.json({ error: "Missing ID" }, { status: 400 });
 
-    // 3. FETCH EXPANDED ORDER DETAILS
-    // We explicitly fetch product->name to ensure we have the titles for the email
+    // 3. FETCH EXPANDED ORDER DETAILS (Fixed Mappings)
     const query = `
       *[_type == "order" && orderNumber == $orderId][0]{
         _id,
@@ -110,12 +109,12 @@ export async function POST(req: Request) {
         customerName,
         email,
         phone,
-        shippingAddress,
+        address, 
         total,
         paymentStatus,
         emailSent,
-        products[]{
-          "name": product->name,
+        "products": items[]{
+          "name": productName,
           quantity,
           bundleTitle,
           price
@@ -125,7 +124,10 @@ export async function POST(req: Request) {
 
     const order = await backendClient.fetch(query, { orderId });
 
-    if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    if (!order) {
+        console.error(`Order ${orderId} not found in Sanity`);
+        return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
 
     // 4. PREVENT DUPLICATES
     if (order.paymentStatus === 'paid' && order.emailSent) {
