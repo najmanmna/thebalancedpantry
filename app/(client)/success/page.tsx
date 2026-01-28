@@ -22,8 +22,44 @@ const SuccessPage = () => {
   const resetCart = useCartStore((state) => state.resetCart);
   const [validAccess, setValidAccess] = useState(false);
   
+  // Refs to ensure logic runs only once
   const eventFired = useRef(false);
+  const paymentVerified = useRef(false);
 
+  // ---------------------------------------------------------
+  // 1. PAYMENT VERIFICATION (CRITICAL FOR CARD ORDERS)
+  // ---------------------------------------------------------
+  useEffect(() => {
+    const verifyCardPayment = async () => {
+      // Run only if: Order exists, is CARD, and hasn't run yet
+      if (orderNumber && paymentMethod === "CARD" && !paymentVerified.current) {
+        paymentVerified.current = true;
+        console.log(`🔵 Verifying Payment for ${orderNumber}...`);
+
+        try {
+          const res = await fetch("/api/payment-success", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId: orderNumber }),
+          });
+
+          if (res.ok) {
+            console.log("🟢 Payment Verified & Emails Sent");
+          } else {
+            console.error("🔴 Verification Failed");
+          }
+        } catch (error) {
+          console.error("🔴 Network Error during Verification", error);
+        }
+      }
+    };
+
+    verifyCardPayment();
+  }, [orderNumber, paymentMethod]);
+
+  // ---------------------------------------------------------
+  // 2. ACCESS CONTROL & CLEANUP
+  // ---------------------------------------------------------
   useEffect(() => {
     // 1. Check Session Storage (For COD)
     const placed = sessionStorage.getItem("orderPlaced");
@@ -50,7 +86,9 @@ const SuccessPage = () => {
     return () => window.removeEventListener("beforeunload", handleUnload);
   }, [orderNumber, paymentMethod, router, resetCart]);
 
-  // GA4 TRACKING
+  // ---------------------------------------------------------
+  // 3. ANALYTICS
+  // ---------------------------------------------------------
   useEffect(() => {
     if (validAccess && orderNumber && total && !eventFired.current) {
       sendGAEvent("purchase", {
@@ -117,7 +155,9 @@ Nations Trust Bank Wellawatte Branch`;
                   </div>
                   <div>
                       <span className="block text-xs font-bold uppercase tracking-widest text-charcoal/40 mb-1">Payment Method</span>
-                      <span className="font-sans text-sm font-bold text-charcoal">{paymentMethod}</span>
+                      <span className="font-sans text-sm font-bold text-charcoal">
+                        {paymentMethod === 'CARD' ? 'Online Card Payment' : paymentMethod}
+                      </span>
                   </div>
                   <div>
                       <span className="block text-xs font-bold uppercase tracking-widest text-charcoal/40 mb-1">Estimated Delivery</span>
@@ -126,6 +166,7 @@ Nations Trust Bank Wellawatte Branch`;
                </div>
             </div>
 
+            {/* Bank Transfer Instructions */}
             {paymentMethod.toLowerCase().includes("bank") && (
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
