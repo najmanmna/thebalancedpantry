@@ -693,7 +693,7 @@ export default function CheckoutPage() {
               <Separator className="bg-charcoal/10 mb-6" />
 
               {/* PROMO CODE INPUT */}
-              <div className="mb-6">
+              {/* <div className="mb-6">
                 <Label className="text-xs font-bold text-charcoal/50 uppercase mb-2 block">
                   Have a Promo Code?
                 </Label>
@@ -728,7 +728,7 @@ export default function CheckoutPage() {
                     <CheckCircle2 size={12} /> Code Applied!
                   </p>
                 )}
-              </div>
+              </div> */}
 
               <Separator className="bg-charcoal/10 mb-6" />
 
