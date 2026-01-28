@@ -22,12 +22,18 @@ const SuccessPage = () => {
   const resetCart = useCartStore((state) => state.resetCart);
   const [validAccess, setValidAccess] = useState(false);
   
-  // ✅ Prevent double-firing analytics
   const eventFired = useRef(false);
 
   useEffect(() => {
+    // 1. Check Session Storage (For COD)
     const placed = sessionStorage.getItem("orderPlaced");
-    if (!orderNumber || !placed) {
+    
+    // 2. Allow access if:
+    //    a) Order number exists AND "orderPlaced" is in session (COD flow)
+    //    b) OR Order number exists AND payment is "CARD" (Gateway flow)
+    const isCardPayment = paymentMethod === "CARD";
+
+    if (!orderNumber || (!placed && !isCardPayment)) {
       router.replace("/");
       return;
     }
@@ -35,15 +41,16 @@ const SuccessPage = () => {
     setValidAccess(true);
     resetCart();
 
+    // Clean up session storage only if it exists
     const handleUnload = () => {
-      sessionStorage.removeItem("orderPlaced");
+      if (placed) sessionStorage.removeItem("orderPlaced");
     };
     window.addEventListener("beforeunload", handleUnload);
 
     return () => window.removeEventListener("beforeunload", handleUnload);
-  }, [orderNumber, router, resetCart]);
+  }, [orderNumber, paymentMethod, router, resetCart]);
 
-  // 🔥 GA4 TRACKING
+  // GA4 TRACKING
   useEffect(() => {
     if (validAccess && orderNumber && total && !eventFired.current) {
       sendGAEvent("purchase", {
@@ -78,12 +85,10 @@ Nations Trust Bank Wellawatte Branch`;
         {/* RECEIPT CARD */}
         <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-charcoal/5 relative">
           
-          {/* Top Decorative Pattern */}
           <div className="h-3 bg-repeat-x opacity-20" style={{ backgroundImage: "linear-gradient(135deg, #D64545 25%, transparent 25%), linear-gradient(225deg, #D64545 25%, transparent 25%)", backgroundSize: "20px 20px" }}></div>
 
           <div className="p-8 sm:p-12 text-center">
             
-            {/* Success Icon */}
             <motion.div 
               initial={{ scale: 0, rotate: -45 }}
               animate={{ scale: 1, rotate: 0 }}
@@ -100,34 +105,27 @@ Nations Trust Bank Wellawatte Branch`;
               Your pantry is being restocked. We’ve sent a confirmation email with your details.
             </p>
 
-            {/* Order Details Box */}
             <div className="mt-10 bg-cream/50 rounded-3xl p-8 border border-charcoal/5 text-left">
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-12">
-                  
                   <div>
-                     <span className="block text-xs font-bold uppercase tracking-widest text-charcoal/40 mb-1">Order Number</span>
-                     <span className="font-serif text-xl font-bold text-charcoal">#{orderNumber}</span>
+                      <span className="block text-xs font-bold uppercase tracking-widest text-charcoal/40 mb-1">Order Number</span>
+                      <span className="font-serif text-xl font-bold text-charcoal">#{orderNumber}</span>
                   </div>
-
                   <div>
-                     <span className="block text-xs font-bold uppercase tracking-widest text-charcoal/40 mb-1">Total Amount</span>
-                     <PriceFormatter amount={total} className="font-serif text-xl font-bold text-brandRed" />
+                      <span className="block text-xs font-bold uppercase tracking-widest text-charcoal/40 mb-1">Total Amount</span>
+                      <PriceFormatter amount={total} className="font-serif text-xl font-bold text-brandRed" />
                   </div>
-
                   <div>
-                     <span className="block text-xs font-bold uppercase tracking-widest text-charcoal/40 mb-1">Payment Method</span>
-                     <span className="font-sans text-sm font-bold text-charcoal">{paymentMethod}</span>
+                      <span className="block text-xs font-bold uppercase tracking-widest text-charcoal/40 mb-1">Payment Method</span>
+                      <span className="font-sans text-sm font-bold text-charcoal">{paymentMethod}</span>
                   </div>
-
                   <div>
-                     <span className="block text-xs font-bold uppercase tracking-widest text-charcoal/40 mb-1">Estimated Delivery</span>
-                     <span className="font-sans text-sm font-bold text-charcoal">3-5 Working Days</span>
+                      <span className="block text-xs font-bold uppercase tracking-widest text-charcoal/40 mb-1">Estimated Delivery</span>
+                      <span className="font-sans text-sm font-bold text-charcoal">3-5 Working Days</span>
                   </div>
-
                </div>
             </div>
 
-            {/* Bank Transfer Section (Conditional) */}
             {paymentMethod.toLowerCase().includes("bank") && (
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
@@ -156,7 +154,6 @@ Nations Trust Bank Wellawatte Branch`;
               </motion.div>
             )}
 
-            {/* Action Buttons */}
             <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center">
                <Link href="/shop">
                   <button className="w-full sm:w-auto px-8 py-4 bg-charcoal text-white rounded-xl font-serif font-bold text-lg hover:bg-black transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
@@ -172,18 +169,16 @@ Nations Trust Bank Wellawatte Branch`;
 
           </div>
 
-          {/* Bottom Receipt Edge */}
           <div className="h-4 bg-white relative">
              <div className="absolute w-full h-full" style={{ 
-                background: "linear-gradient(45deg, transparent 33.333%, #F3EFE0 33.333%, #F3EFE0 66.667%, transparent 66.667%), linear-gradient(-45deg, transparent 33.333%, #F3EFE0 33.333%, #F3EFE0 66.667%, transparent 66.667%)",
-                backgroundSize: "20px 40px",
-                backgroundPosition: "0 100%"
+               background: "linear-gradient(45deg, transparent 33.333%, #F3EFE0 33.333%, #F3EFE0 66.667%, transparent 66.667%), linear-gradient(-45deg, transparent 33.333%, #F3EFE0 33.333%, #F3EFE0 66.667%, transparent 66.667%)",
+               backgroundSize: "20px 40px",
+               backgroundPosition: "0 100%"
              }}></div>
           </div>
 
         </div>
         
-        {/* Trust Footer */}
         <p className="text-center mt-8 text-charcoal/40 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2">
            <PackageCheck className="w-4 h-4" />
            Verified Purchase

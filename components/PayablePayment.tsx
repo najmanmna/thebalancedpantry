@@ -47,6 +47,7 @@ const PayablePaymentButton: React.FC<PayablePaymentProps> = ({
              method: "POST",
              headers: { "Content-Type": "application/json" },
              body: JSON.stringify({ orderId }),
+             keepalive: true,
            });
         } catch(e) { console.error("Update failed", e); }
 
