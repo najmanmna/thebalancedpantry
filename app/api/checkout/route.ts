@@ -7,7 +7,7 @@ export const runtime = 'edge';
 
 // --- CONFIGURATION ---
 const resend = new Resend(process.env.RESEND_API_KEY);
-const ADMIN_EMAIL = "mnanajman@gmail.com"; // Admin notification email
+const ADMIN_EMAIL = "najeeramni@gmail.com"; // Admin notification email
 const SENDER_EMAIL = "The Balanced Pantry <no-reply@thebalancedpantry.lk>";
 const REPLY_TO_EMAIL = "orders@thebalancedpantry.lk"; 
 
