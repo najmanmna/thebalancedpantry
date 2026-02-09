@@ -5,7 +5,7 @@ import { Resend } from "resend";
 export const runtime = 'edge';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const ADMIN_EMAIL = "najeeramni@gmail.com"; 
+const ADMIN_EMAIL = "orders@thebalancedpantry.lk"; 
 const SENDER_EMAIL = "The Balanced Pantry <no-reply@thebalancedpantry.lk>";
 
 // --- 1. HELPER: Format Currency ---
