@@ -97,7 +97,7 @@ const PayablePaymentButton: React.FC<PayablePaymentProps> = ({
     try {
        // false = Production, true = Sandbox
        // Change to false when going live!
-       payablePayment(paymentConfig as any, true); 
+       payablePayment(paymentConfig as any, false); 
     } catch (e) {
        console.error(e);
        setIsLoading(false);
