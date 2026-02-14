@@ -4,7 +4,7 @@ import Title from "@/components/Title";
 import { getCategories, getMaterials } from "@/sanity/queries";
 import React from "react";
 
-export const revalidate = 60;
+export const revalidate = 0;
 
 const ShopPage = async () => {
   // 1. Fetch data on the server
