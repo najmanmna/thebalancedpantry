@@ -828,7 +828,7 @@ export default function CheckoutPage() {
                   </div>
 
                   {/* Bank Option */}
-                  <div>
+                  {/* <div>
                     <RadioGroupItem
                       value="BANK"
                       id="bank"
@@ -846,7 +846,7 @@ export default function CheckoutPage() {
                       </div>
                       <div className="w-4 h-4 rounded-full border border-charcoal/20 peer-data-[state=checked]:bg-brandRed peer-data-[state=checked]:border-brandRed"></div>
                     </Label>
-                  </div>
+                  </div> */}
                 </RadioGroup>
               </div>
 

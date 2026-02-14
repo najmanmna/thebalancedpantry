@@ -17,8 +17,8 @@ async function getHeroProduct() {
     name,
     slug,
     sku,
-    subtitle,  // 🔹 New: For the hero text
-    badge,     // 🔹 New: For "Best Seller" tags
+    subtitle,  
+    badge,     
     description,
     price,
     
