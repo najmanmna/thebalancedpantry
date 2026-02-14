@@ -3,6 +3,7 @@ import CategoryProducts from "@/components/CategoryProducts";
 import Title from "@/components/Title";
 import { getCategories, getMaterials } from "@/sanity/queries";
 import React from "react";
+export const runtime = 'edge';
 
 export const revalidate = 0;
 
