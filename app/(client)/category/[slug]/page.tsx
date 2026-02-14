@@ -3,7 +3,7 @@ import { getCategories, getMaterials } from "@/sanity/queries"; // Ensure these 
 import React from "react";
  export const runtime = 'edge';
 // ISR: Revalidate every 60 seconds
-export const revalidate = 60;
+export const revalidate = 0;
 
 const CategoryPage = async ({ params }: { params: Promise<{ slug: string }> }) => {
   // 1. Await params (Next 15 requirement)
