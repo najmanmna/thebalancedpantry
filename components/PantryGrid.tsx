@@ -40,7 +40,7 @@ const productsQuery = groq`*[_type == "product"] | order(_createdAt desc)[0...5]
 
 export default async function PantryGrid() {
   // 2. CACHING: Revalidate every hour (ISR)
-  const products = await client.fetch<Product[]>(productsQuery, {}, { next: { revalidate: 3600 } });
+  const products = await client.fetch<Product[]>(productsQuery, {}, { next: { revalidate: 0 } });
 
   return (
     <section className="py-24 bg-white">
