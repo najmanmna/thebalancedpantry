@@ -71,8 +71,8 @@ const CategoryProducts = ({ categories, slug, materials }: Props) => {
 
   const clearFilters = () => {
     setSelectedMaterials([]);
-    setTempPrice({ min: 0, max: 20000 });
-    setPriceRange({ min: 0, max: 20000 });
+    setTempPrice({ min: 0, max: 20000000 });
+    setPriceRange({ min: 0, max: 20000000 });
   };
 
   // Reset filters when changing category
@@ -134,7 +134,10 @@ const CategoryProducts = ({ categories, slug, materials }: Props) => {
             }
         }`;
 
-        const data = await client.fetch(query);
+        const data = await client.fetch(query, {}, {
+      cache: 'no-store',      // 👈 Disables Browser Cache
+      next: { revalidate: 0 } // 👈 Disables Next.js Cache
+    });
         setProducts(data);
       } catch (error) {
         console.error("Error fetching products:", error);
