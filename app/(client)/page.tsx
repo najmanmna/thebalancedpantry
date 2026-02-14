@@ -7,6 +7,7 @@ import PantryGrid from "@/components/PantryGrid";
 import FAQSection from "@/components/FAQSection";
 import UsageSection from "@/components/UsageSection";
 import ScienceCTA from "@/components/ScienceCTA"; // 👈 Import the new component
+export const runtime = 'edge';
 
 // 1. Define the Fetch Function
 async function getHeroProduct() {
